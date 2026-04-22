@@ -4,8 +4,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NER · Gemma 4 Local</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<title>NER . Gemma 4 Local</title>
+<style>
+@import url('https://fonts.cdnfonts.com/css/ibm-plex-mono');
+@import url('https://fonts.cdnfonts.com/css/syne');
+</style>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -57,7 +60,7 @@ background-size:28px 28px;
 
 .wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:32px 20px 80px}
 
-/* ── HEADER ── */
+/* – HEADER – */
 header{margin-bottom:40px}
 
 .hdr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
@@ -76,7 +79,7 @@ white-space:nowrap;flex-shrink:0
 }
 .chip-dot{width:7px;height:7px;background:var(–acc);border-radius:50%}
 
-/* ── MODEL STATUS BAR ── */
+/* – MODEL STATUS BAR – */
 #statusBar{
 margin-top:20px;padding:12px 16px;
 background:var(–s1);border:1px solid var(–border);border-radius:10px;
@@ -95,11 +98,11 @@ display:flex;align-items:center;gap:12px;flex-wrap:wrap
 #progressWrap{width:100%;height:3px;background:var(–border);border-radius:3px;overflow:hidden;display:none}
 #progressBar{height:100%;background:linear-gradient(90deg,var(–acc2),var(–acc));width:0%;transition:width .3s;border-radius:3px}
 
-/* ── GRID ── */
+/* – GRID – */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:620px){.grid{grid-template-columns:1fr}}
 
-/* ── PANEL ── */
+/* – PANEL – */
 .panel{background:var(–s1);border:1px solid var(–border);border-radius:12px;overflow:hidden;transition:border-color .2s}
 .panel:focus-within{border-color:var(–acc2);box-shadow:0 0 0 1px var(–acc2),0 0 24px var(–acc-glow)}
 
@@ -114,7 +117,7 @@ line-height:1.75;padding:16px;caret-color:var(–acc)
 }
 textarea::placeholder{color:var(–tx3)}
 
-/* ── INFO PANEL ── */
+/* – INFO PANEL – */
 .info-panel{display:flex;flex-direction:column;gap:10px}
 
 .model-selector-card{background:var(–s1);border:1px solid var(–border);border-radius:10px;overflow:hidden}
@@ -131,7 +134,7 @@ cursor:pointer;transition:background .15s;border:1px solid transparent
 .model-opt-name{font-family:‘IBM Plex Mono’,monospace;font-size:11px;color:var(–tx);flex:1}
 .model-opt-size{font-family:‘IBM Plex Mono’,monospace;font-size:10px;color:var(–tx2);white-space:nowrap}
 
-/* ── ACTIONS ── */
+/* – ACTIONS – */
 .actions{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 
 .btn{
@@ -154,7 +157,7 @@ border:none;transition:all .15s;position:relative;overflow:hidden
 .spinner-acc{border-color:rgba(0,212,255,.2);border-top-color:var(–acc)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── RESULTS ── */
+/* – RESULTS – */
 .results{grid-column:1/-1}
 
 .entities-grid{
@@ -176,7 +179,7 @@ animation:fadeUp .3s ease both
 .eg-ct{font-family:‘IBM Plex Mono’,monospace;font-size:9px;padding:2px 6px;border-radius:999px;background:var(–acc-dim);color:var(–acc)}
 .eg-vals{padding:9px 12px;display:flex;flex-direction:column;gap:5px}
 .eg-val{font-family:‘IBM Plex Mono’,monospace;font-size:11.5px;color:var(–tx);display:flex;align-items:flex-start;gap:6px;line-height:1.4}
-.eg-val::before{content:’›’;color:var(–tx3);flex-shrink:0}
+.eg-val::before{content:’>’;color:var(–tx3);flex-shrink:0}
 .eg-empty{font-family:‘IBM Plex Mono’,monospace;font-size:11px;color:var(–tx3);padding:9px 12px;font-style:italic}
 
 /* highlighted text */
@@ -239,16 +242,16 @@ word-break:break-word
 <header>
   <div class="hdr-top">
     <div class="logo">
-      <span class="logo-sup">Extrator de Entidades · 100% Local</span>
+      <span class="logo-sup">Extrator de Entidades . 100% Local</span>
       <h1>NER com <em>Gemma 4</em></h1>
     </div>
-    <div class="chip"><span class="chip-dot"></span>WebGPU · Transformers.js</div>
+    <div class="chip"><span class="chip-dot"></span>WebGPU . Transformers.js</div>
   </div>
 
   <div id="statusBar">
     <span class="sb-label">Modelo</span>
     <span class="sb-model" id="sbModel">onnx-community/gemma-4-E2B-it-ONNX</span>
-    <span class="sb-state state-idle" id="sbState">Não carregado</span>
+    <span class="sb-state state-idle" id="sbState">Nao carregado</span>
     <div id="progressWrap"><div id="progressBar"></div></div>
   </div>
 </header>
@@ -264,9 +267,9 @@ word-break:break-word
       <span class="ph-title">Texto de Entrada</span>
       <span class="ph-meta" id="charCount">0 chars</span>
     </div>
-    <textarea id="textInput" placeholder="Cole aqui o texto para extração de entidades...
+    <textarea id="textInput" placeholder="Cole aqui o texto para extracao de entidades...
 
-Exemplo: João da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, São Paulo, SP, Brasil. Trabalha na TechNova Ltda, CNPJ 12.345.678/0001-90. Encomenda rastreio: AA987654321BR. NF-e: 35230112345678000190550010000123411234567890”></textarea>
+Exemplo: Joao da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, Sao Paulo, SP, Brasil. Trabalha na TechNova Ltda, CNPJ 12.345.678/0001-90. Encomenda rastreio: AA987654321BR. NF-e: 35230112345678000190550010000123411234567890”></textarea>
 
   </div>
 
@@ -279,12 +282,12 @@ Exemplo: João da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, São 
         <label class="model-opt active">
           <input type="radio" name="model" value="onnx-community/gemma-4-E2B-it-ONNX" checked/>
           <span class="model-opt-name">Gemma 4 E2B</span>
-          <span class="model-opt-size">~500 MB · rápido</span>
+          <span class="model-opt-size">~500 MB . rapido</span>
         </label>
         <label class="model-opt">
           <input type="radio" name="model" value="onnx-community/gemma-4-E4B-it-ONNX"/>
           <span class="model-opt-name">Gemma 4 E4B</span>
-          <span class="model-opt-size">~1.5 GB · melhor</span>
+          <span class="model-opt-size">~1.5 GB . melhor</span>
         </label>
       </div>
     </div>
@@ -293,12 +296,12 @@ Exemplo: João da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, São 
 <div class="panel" style="background:rgba(0,212,255,.03);">
   <div style="padding:14px 15px;">
     <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx2);line-height:1.8">
-      🔒 Roda <strong style="color:var(--acc)">100% local</strong> no seu browser via WebGPU.<br>
-      Nenhum dado sai da sua máquina.<br><br>
-      ⚡ Requer Chrome 113+ ou Edge 113+<br>
+      [lock] Roda <strong style="color:var(--acc)">100% local</strong> no seu browser via WebGPU.<br>
+      Nenhum dado sai da sua maquina.<br><br>
+      >> Requer Chrome 113+ ou Edge 113+<br>
       com WebGPU habilitado.<br><br>
-      📦 O modelo é baixado do HuggingFace<br>
-      e <strong style="color:var(--ok)">cacheado</strong> no browser após o 1º uso.
+      [pkg] O modelo e baixado do HuggingFace<br>
+      e <strong style="color:var(--ok)">cacheado</strong> no browser apos o 1o uso.
     </p>
   </div>
 </div>
@@ -311,11 +314,11 @@ Exemplo: João da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, São 
   <div class="actions">
     <button class="btn btn-ghost" id="btnClear">Limpar</button>
     <button class="btn btn-load" id="btnLoad">
-      <span id="loadIcon">⬇</span>
+      <span id="loadIcon">v</span>
       <span id="loadTxt">Carregar Modelo</span>
     </button>
     <button class="btn btn-primary" id="btnExtract" disabled>
-      <span id="extractIcon">⚡</span>
+      <span id="extractIcon">>></span>
       <span id="extractTxt">Extrair Entidades</span>
     </button>
   </div>
@@ -328,7 +331,7 @@ Exemplo: João da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, São 
 
   <div id="streamBox">
     <div class="ph">
-      <span class="ph-title">Saída bruta do modelo</span>
+      <span class="ph-title">Saida bruta do modelo</span>
     </div>
     <div id="streamInner"></div>
   </div>
@@ -337,11 +340,11 @@ Exemplo: João da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, São 
 
   <div class="panel results" id="resultsPanel" style="display:none">
     <div class="ph">
-      <span class="ph-title">Entidades Extraídas</span>
+      <span class="ph-title">Entidades Extraidas</span>
       <button class="btn-copy" id="btnCopy">Copiar JSON</button>
     </div>
     <div id="resultsInner">
-      <div class="empty"><span class="empty-icon">◎</span><span class="empty-txt">Aguardando análise</span></div>
+      <div class="empty"><span class="empty-icon">o</span><span class="empty-txt">Aguardando analise</span></div>
     </div>
   </div>
 
@@ -362,14 +365,14 @@ import {
   TextStreamer
 } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0';
 
-// ── ENTITY CONFIG ──────────────────────────────────────────────────
+// -- ENTITY CONFIG --------------------------------------------------
 const ENTITIES = [
   {key:'pessoa',    label:'Pessoa',          color:'#a78bfa'},
   {key:'empresa',   label:'Empresa',         color:'#fb923c'},
-  {key:'endereco',  label:'Endereço',        color:'#38bdf8'},
+  {key:'endereco',  label:'Endereco',        color:'#38bdf8'},
   {key:'cidade',    label:'Cidade',          color:'#34d399'},
   {key:'estado',    label:'Estado',          color:'#fbbf24'},
-  {key:'pais',      label:'País',            color:'#f472b6'},
+  {key:'pais',      label:'Pais',            color:'#f472b6'},
   {key:'nascimento',label:'Ano Nasc.',       color:'#c084fc'},
   {key:'cpf',       label:'CPF',             color:'#2dd4bf'},
   {key:'cnpj',      label:'CNPJ',            color:'#f97316'},
@@ -378,13 +381,13 @@ const ENTITIES = [
   {key:'nfe',       label:'NF-e',            color:'#60a5fa'},
 ];
 
-const PROMPT_SYSTEM = `Você é um extrator de entidades nomeadas especializado em textos brasileiros.
-Retorne SOMENTE um objeto JSON válido, sem markdown, sem explicações, sem texto fora do JSON.
-Formato EXATO (todos os campos obrigatórios):
+const PROMPT_SYSTEM = `Voce e um extrator de entidades nomeadas especializado em textos brasileiros.
+Retorne SOMENTE um objeto JSON valido, sem markdown, sem explicacoes, sem texto fora do JSON.
+Formato EXATO (todos os campos obrigatorios):
 {"pessoa":[],"empresa":[],"endereco":[],"cidade":[],"estado":[],"pais":[],"nascimento":[],"cpf":[],"cnpj":[],"rastreio":[],"cte":[],"nfe":[]}
-Regras: preserve valores exatamente como aparecem; sem duplicatas por chave; arrays vazios se não encontrado.`;
+Regras: preserve valores exatamente como aparecem; sem duplicatas por chave; arrays vazios se nao encontrado.`;
 
-// ── DOM ────────────────────────────────────────────────────────────
+// -- DOM ------------------------------------------------------------
 const $ = id => document.getElementById(id);
 const textInput   = $('textInput');
 const charCount   = $('charCount');
@@ -408,7 +411,7 @@ const loadTxt     = $('loadTxt');
 const extractIcon = $('extractIcon');
 const extractTxt  = $('extractTxt');
 
-// ── STATE ──────────────────────────────────────────────────────────
+// -- STATE ----------------------------------------------------------
 let processor = null;
 let model     = null;
 let isLoading = false;
@@ -416,25 +419,25 @@ let isRunning = false;
 let lastResult= null;
 let currentModelId = 'onnx-community/gemma-4-E2B-it-ONNX';
 
-// ── UTILS ──────────────────────────────────────────────────────────
+// -- UTILS ----------------------------------------------------------
 function setState(s, label){
   sbState.className = 'sb-state state-' + s;
   sbState.textContent = label;
 }
 
-function showErr(msg){ errBox.style.display='flex'; errBox.textContent='⚠ '+msg }
+function showErr(msg){ errBox.style.display='flex'; errBox.textContent='(!) '+msg }
 function hideErr(){ errBox.style.display='none' }
 
 function setLoadBtn(loading){
   btnLoad.disabled = loading || isRunning;
-  loadIcon.textContent = loading ? '' : '⬇';
+  loadIcon.textContent = loading ? '' : 'v';
   loadTxt.textContent  = loading ? 'Carregando...' : 'Carregar Modelo';
   if(loading) loadIcon.innerHTML = '<div class="spinner spinner-acc"></div>';
 }
 
 function setExtractBtn(running){
   btnExtract.disabled = running || !model;
-  extractIcon.textContent = running ? '' : '⚡';
+  extractIcon.textContent = running ? '' : '>>';
   extractTxt.textContent  = running ? 'Processando...' : 'Extrair Entidades';
   if(running) extractIcon.innerHTML = '<div class="spinner"></div>';
 }
@@ -447,7 +450,7 @@ document.querySelectorAll('.model-opt').forEach(el => {
     currentModelId = el.querySelector('input').value;
     sbModel.textContent = currentModelId;
     // reset model if switching
-    if(model){ model=null; processor=null; setState('idle','Não carregado'); btnExtract.disabled=true; }
+    if(model){ model=null; processor=null; setState('idle','Nao carregado'); btnExtract.disabled=true; }
   });
 });
 
@@ -471,7 +474,7 @@ btnCopy.addEventListener('click', () => {
   });
 });
 
-// ── LOAD MODEL ─────────────────────────────────────────────────────
+// -- LOAD MODEL -----------------------------------------------------
 btnLoad.addEventListener('click', loadModel);
 
 async function loadModel(){
@@ -515,10 +518,10 @@ async function loadModel(){
     });
 
     progressBar.style.width='100%';
-    setState('ready','Pronto ✓');
+    setState('ready','Pronto OK');
     btnExtract.disabled = false;
-    btnLoad.textContent = '✓ Recarregar';
-    loadIcon.textContent = '✓';
+    btnLoad.textContent = 'OK Recarregar';
+    loadIcon.textContent = 'OK';
     loadTxt.textContent = 'Recarregar';
 
   } catch(e) {
@@ -532,12 +535,12 @@ async function loadModel(){
   }
 }
 
-// ── EXTRACT ────────────────────────────────────────────────────────
+// -- EXTRACT --------------------------------------------------------
 btnExtract.addEventListener('click', runExtract);
 
 async function runExtract(){
   const text = textInput.value.trim();
-  if(!text){ showErr('Insira um texto para análise.'); return; }
+  if(!text){ showErr('Insira um texto para analise.'); return; }
   if(!model){ showErr('Carregue o modelo primeiro.'); return; }
   if(isRunning) return;
 
@@ -560,10 +563,16 @@ async function runExtract(){
   hlPanel.style.display='none';
 
   try {
-    const userContent = `${PROMPT_SYSTEM}\n\nTexto:\n${text}`;
-
+    // Build a text-only message (no image/audio needed for NER)
     const messages = [
-      { role:'user', content: userContent }
+      {
+        role: 'system',
+        content: PROMPT_SYSTEM
+      },
+      {
+        role: 'user',
+        content: `Texto:\n${text}`
+      }
     ];
 
     const prompt = processor.apply_chat_template(messages, {
@@ -571,13 +580,16 @@ async function runExtract(){
       add_generation_prompt: true,
     });
 
-    const inputs = await processor(prompt);
+    // For text-only input in v4, pass just the prompt string
+    const inputs = await processor(prompt, null, null, {
+      add_special_tokens: false,
+    });
 
     let generated = '';
 
     const streamer = new TextStreamer(processor.tokenizer, {
       skip_prompt: true,
-      skip_special_tokens: true,
+      skip_special_tokens: false,
       callback_function: (chunk) => {
         generated += chunk;
         streamInner.textContent = generated;
@@ -585,12 +597,21 @@ async function runExtract(){
       }
     });
 
-    await model.generate({
+    const outputs = await model.generate({
       ...inputs,
       max_new_tokens: 512,
       do_sample: false,
       streamer,
     });
+
+    // Decode only newly generated tokens (skip the prompt)
+    const inputLen = inputs.input_ids.dims.at(-1);
+    const decoded = processor.batch_decode(
+      outputs.slice(null, [inputLen, null]),
+      { skip_special_tokens: true }
+    );
+    generated = decoded[0] || generated;
+    streamInner.textContent = generated;
 
     // parse result
     const parsed = parseJSON(generated);
@@ -598,22 +619,22 @@ async function runExtract(){
       lastResult = parsed;
       renderResults(parsed, text);
     } else {
-      showErr('Modelo retornou resposta inválida. Tente novamente.');
+      showErr('Modelo retornou resposta invalida. Tente novamente.');
       resultsPanel.style.display='none';
     }
 
   } catch(e){
     console.error(e);
-    showErr(e.message || 'Erro durante a inferência.');
+    showErr(e.message || 'Erro durante a inferencia.');
     resultsPanel.style.display='none';
   } finally {
     isRunning = false;
     setExtractBtn(false);
-    setState('ready','Pronto ✓');
+    setState('ready','Pronto OK');
   }
 }
 
-// ── PARSE JSON ─────────────────────────────────────────────────────
+// -- PARSE JSON -----------------------------------------------------
 function parseJSON(raw){
   try{
     let t = raw.trim()
@@ -626,7 +647,7 @@ function parseJSON(raw){
   return null;
 }
 
-// ── RENDER ─────────────────────────────────────────────────────────
+// -- RENDER ---------------------------------------------------------
 function renderResults(data, originalText){
   resultsPanel.style.display='block';
 
@@ -705,11 +726,11 @@ function renderHighlight(text, data){
   hlPanel.style.display='block';
 }
 
-// ── INIT ───────────────────────────────────────────────────────────
-textInput.value = `João Carlos da Silva, nascido em 1985, CPF 123.456.789-00, reside na Av. Paulista, 1000, apto 42, São Paulo, SP, Brasil.
-É sócio da TechNova Soluções Ltda, CNPJ 12.345.678/0001-90, localizada em Campinas, SP.
+// -- INIT -----------------------------------------------------------
+textInput.value = `Joao Carlos da Silva, nascido em 1985, CPF 123.456.789-00, reside na Av. Paulista, 1000, apto 42, Sao Paulo, SP, Brasil.
+E socio da TechNova Solucoes Ltda, CNPJ 12.345.678/0001-90, localizada em Campinas, SP.
 Encomenda com rastreio AA987654321BR despachada com CT-e 35230112345678000190570010000012341000012345 e NF-e 35230112345678000190550010000123411234567890.
-Maria Oliveira, CPF 987.654.321-00, é diretora da filial em Lisboa, Portugal.`;
+Maria Oliveira, CPF 987.654.321-00, e diretora da filial em Lisboa, Portugal.`;
 charCount.textContent = textInput.value.length + ' chars';
 </script>
 
