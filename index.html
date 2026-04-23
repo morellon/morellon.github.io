@@ -355,30 +355,67 @@ async function loadModel() {
 
   try {
     const mid = currentModelId;
-    let filesDone = 0, filesTotal = 0, lastFilePct = 0;
+    // Rastreia progresso de cada arquivo individualmente.
+    // Downloads sao paralelos, entao acumulamos bytes por arquivo
+    // e calculamos o total agregado - display estavel sem flicker.
+    const fileProgress = new Map(); // fname -> {loaded, total}
+    let gpuPhase = false;
+
+    function calcOverall() {
+      let sumL = 0, sumT = 0;
+      fileProgress.forEach(f => { sumL += f.loaded; sumT += f.total; });
+      if (sumT === 0) return 0;
+      return Math.min(Math.round(sumL / sumT * 100), 99);
+    }
+
+    // Throttle DOM updates to 1x per animation frame
+    let rafPending = false;
+    function scheduleUpdate() {
+      if (rafPending || gpuPhase) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        const overall = calcOverall();
+        // Find the file currently most active (highest partial %)
+        let activeFile = '', bestPct = -1;
+        fileProgress.forEach((f, name) => {
+          if (f.total > 0 && f.loaded < f.total) {
+            const pct = Math.round(f.loaded / f.total * 100);
+            if (pct > bestPct) { bestPct = pct; activeFile = name; }
+          }
+        });
+        const label = activeFile
+          ? overall + '% total   |   arquivo atual: ' + activeFile + ' ' + bestPct + '%'
+          : overall + '%';
+        setProgress(overall, label);
+        setState('loading', 'Baixando... ' + overall + '%');
+      });
+    }
 
     const onProgress = (info) => {
+      const fname = (info.file || '').split('/').pop();
       if (info.status === 'initiate') {
-        filesTotal++;
-        const fname = (info.file || '').split('/').pop();
-        sbS.textContent = 'Aguardando: ' + fname;
+        fileProgress.set(fname, { loaded: 0, total: info.total || 1 });
       } else if (info.status === 'progress') {
-        lastFilePct = Math.round(info.progress || 0);
-        const overall = filesTotal > 1
-          ? Math.round((filesDone * 100 + lastFilePct) / filesTotal)
-          : lastFilePct;
-        setProgress(overall, lastFilePct + '% - ' + ((info.file || '').split('/').pop()));
-        setState('loading', 'Baixando... ' + overall + '%');
+        const pct = info.progress || 0;
+        const total  = info.total  || 1;
+        const loaded = info.loaded || Math.round(pct / 100 * total);
+        const entry  = fileProgress.get(fname) || { loaded: 0, total: total };
+        fileProgress.set(fname, { loaded: Math.max(loaded, entry.loaded), total: Math.max(total, 1) });
+        scheduleUpdate();
       } else if (info.status === 'done') {
-        filesDone++;
-        lastFilePct = 0;
+        const entry = fileProgress.get(fname) || { loaded: 1, total: 1 };
+        fileProgress.set(fname, { loaded: entry.total, total: entry.total });
+        scheduleUpdate();
       } else if (info.status === 'progress_total') {
+        gpuPhase = true;
         const pct = Math.round(info.progress || 0);
-        setProgress(pct, 'GPU: ' + pct + '%');
-        setState('loading', 'Carregando GPU... ' + pct + '%');
+        setProgress(pct, 'Carregando na GPU... ' + pct + '%');
+        setState('loading', 'GPU ' + pct + '%');
       } else if (info.status === 'loading') {
+        gpuPhase = true;
+        setProgress(99, 'Inicializando na GPU...');
         setState('loading', 'Carregando na GPU...');
-        setProgress(99, 'Inicializando...');
       }
     };
 
