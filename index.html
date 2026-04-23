@@ -1,279 +1,134 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NER . Gemma 4 Local</title>
-<style>
-@import url('https://fonts.cdnfonts.com/css/ibm-plex-mono');
-@import url('https://fonts.cdnfonts.com/css/syne');
-</style>
+<title>NER - Gemma 4 Local</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-–bg:#080c10;
-–s1:#0d1318;
-–s2:#111a22;
-–border:#1a2632;
-–border2:#223040;
-–acc:#00d4ff;
-–acc2:#0099cc;
-–acc-dim:rgba(0,212,255,.08);
-–acc-glow:rgba(0,212,255,.18);
-–ok:#00e5a0;
-–warn:#ffb020;
-–err:#ff4757;
-–tx:#dce8f0;
-–tx2:#6a8ea8;
-–tx3:#2a4560;
-
-–c-pessoa:#a78bfa;
-–c-empresa:#fb923c;
-–c-endereco:#38bdf8;
-–c-cidade:#34d399;
-–c-estado:#fbbf24;
-–c-pais:#f472b6;
-–c-nasc:#c084fc;
-–c-cpf:#2dd4bf;
-–c-cnpj:#f97316;
-–c-rastreio:#4ade80;
-–c-cte:#f87171;
-–c-nfe:#60a5fa;
+  --bg:#080c10;--s1:#0d1318;--s2:#111a22;
+  --border:#1a2632;--border2:#223040;
+  --acc:#00d4ff;--acc2:#0099cc;
+  --acc-dim:rgba(0,212,255,.08);--acc-glow:rgba(0,212,255,.18);
+  --ok:#00e5a0;--warn:#ffb020;--err:#ff4757;
+  --tx:#dce8f0;--tx2:#6a8ea8;--tx3:#2a4560;
 }
-
-html,body{height:100%;background:var(–bg);color:var(–tx);font-family:‘Syne’,sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden}
-
-/* scanline overlay */
-body::after{
-content:’’;position:fixed;inset:0;pointer-events:none;z-index:999;
-background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);
-}
-
-/* bg dots */
-body::before{
-content:’’;position:fixed;inset:0;pointer-events:none;z-index:0;
-background-image:radial-gradient(rgba(0,212,255,.06) 1px,transparent 1px);
-background-size:28px 28px;
-}
-
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex Mono',Consolas,monospace;font-size:14px;line-height:1.6;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px)}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(rgba(0,212,255,.06) 1px,transparent 1px);background-size:28px 28px}
 .wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:32px 20px 80px}
-
-/* – HEADER – */
 header{margin-bottom:40px}
-
 .hdr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
-
 .logo{display:flex;flex-direction:column;gap:2px}
-.logo-sup{font-family:‘IBM Plex Mono’,monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(–acc);opacity:.7}
+.logo-sup{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc);opacity:.7}
 h1{font-size:clamp(24px,5vw,38px);font-weight:800;letter-spacing:-.04em;line-height:1.05}
-h1 em{font-style:normal;color:var(–acc)}
-
-.chip{
-display:inline-flex;align-items:center;gap:7px;
-padding:7px 14px;border-radius:999px;
-background:var(–acc-dim);border:1px solid var(–acc2);
-font-family:‘IBM Plex Mono’,monospace;font-size:10px;letter-spacing:.08em;color:var(–acc);
-white-space:nowrap;flex-shrink:0
-}
-.chip-dot{width:7px;height:7px;background:var(–acc);border-radius:50%}
-
-/* – MODEL STATUS BAR – */
-#statusBar{
-margin-top:20px;padding:12px 16px;
-background:var(–s1);border:1px solid var(–border);border-radius:10px;
-display:flex;align-items:center;gap:12px;flex-wrap:wrap
-}
-.sb-label{font-family:‘IBM Plex Mono’,monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(–tx2);white-space:nowrap}
-.sb-model{font-family:‘IBM Plex Mono’,monospace;font-size:12px;color:var(–acc);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sb-state{font-family:‘IBM Plex Mono’,monospace;font-size:11px;padding:3px 10px;border-radius:999px;white-space:nowrap}
-.state-idle{background:rgba(106,142,168,.12);color:var(–tx2);border:1px solid var(–border2)}
-.state-loading{background:rgba(255,176,32,.1);color:var(–warn);border:1px solid rgba(255,176,32,.3)}
-.state-ready{background:rgba(0,229,160,.1);color:var(–ok);border:1px solid rgba(0,229,160,.3)}
-.state-error{background:rgba(255,71,87,.1);color:var(–err);border:1px solid rgba(255,71,87,.3)}
-.state-running{background:rgba(0,212,255,.1);color:var(–acc);border:1px solid rgba(0,212,255,.3)}
-
-/* progress bar */
-#progressWrap{width:100%;height:3px;background:var(–border);border-radius:3px;overflow:hidden;display:none}
-#progressBar{height:100%;background:linear-gradient(90deg,var(–acc2),var(–acc));width:0%;transition:width .3s;border-radius:3px}
-
-/* – GRID – */
+h1 em{font-style:normal;color:var(--acc)}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;background:var(--acc-dim);border:1px solid var(--acc2);font-size:10px;letter-spacing:.08em;color:var(--acc);white-space:nowrap;flex-shrink:0}
+.chip-dot{width:7px;height:7px;background:var(--acc);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#statusBar{margin-top:20px;padding:12px 16px;background:var(--s1);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sb-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);white-space:nowrap}
+.sb-model{font-size:12px;color:var(--acc);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-state{font-size:11px;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.state-idle{background:rgba(106,142,168,.12);color:var(--tx2);border:1px solid var(--border2)}
+.state-loading{background:rgba(255,176,32,.1);color:var(--warn);border:1px solid rgba(255,176,32,.3)}
+.state-ready{background:rgba(0,229,160,.1);color:var(--ok);border:1px solid rgba(0,229,160,.3)}
+.state-error{background:rgba(255,71,87,.1);color:var(--err);border:1px solid rgba(255,71,87,.3)}
+.state-running{background:rgba(0,212,255,.1);color:var(--acc);border:1px solid rgba(0,212,255,.3)}
+#progressWrap{width:100%;height:4px;background:var(--border);border-radius:3px;overflow:hidden;display:none;margin-top:4px}
+#progressBar{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));width:0%;transition:width .4s;border-radius:3px}
+#progressLabel{font-size:10px;color:var(--tx2);letter-spacing:.06em;display:none;width:100%}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:620px){.grid{grid-template-columns:1fr}}
-
-/* – PANEL – */
-.panel{background:var(–s1);border:1px solid var(–border);border-radius:12px;overflow:hidden;transition:border-color .2s}
-.panel:focus-within{border-color:var(–acc2);box-shadow:0 0 0 1px var(–acc2),0 0 24px var(–acc-glow)}
-
-.ph{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(–border);background:var(–s2)}
-.ph-title{font-family:‘IBM Plex Mono’,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(–tx2)}
-.ph-meta{font-family:‘IBM Plex Mono’,monospace;font-size:10px;color:var(–tx3)}
-
-textarea{
-display:block;width:100%;min-height:280px;background:transparent;border:none;outline:none;
-resize:vertical;color:var(–tx);font-family:‘IBM Plex Mono’,monospace;font-size:12.5px;
-line-height:1.75;padding:16px;caret-color:var(–acc)
-}
-textarea::placeholder{color:var(–tx3)}
-
-/* – INFO PANEL – */
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.panel:focus-within{border-color:var(--acc2);box-shadow:0 0 0 1px var(--acc2),0 0 24px var(--acc-glow)}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--border);background:var(--s2)}
+.ph-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx2)}
+.ph-meta{font-size:10px;color:var(--tx3)}
+textarea{display:block;width:100%;min-height:280px;background:transparent;border:none;outline:none;resize:vertical;color:var(--tx);font-family:'IBM Plex Mono',Consolas,monospace;font-size:12.5px;line-height:1.75;padding:16px;caret-color:var(--acc)}
+textarea::placeholder{color:var(--tx3)}
 .info-panel{display:flex;flex-direction:column;gap:10px}
-
-.model-selector-card{background:var(–s1);border:1px solid var(–border);border-radius:10px;overflow:hidden}
-.model-selector-card .ph{border-bottom:1px solid var(–border)}
-
+.model-selector-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .model-opts{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
-.model-opt{
-display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;
-cursor:pointer;transition:background .15s;border:1px solid transparent
-}
-.model-opt:hover{background:var(–s2)}
-.model-opt.active{background:var(–acc-dim);border-color:var(–acc2)}
-.model-opt input{accent-color:var(–acc);cursor:pointer}
-.model-opt-name{font-family:‘IBM Plex Mono’,monospace;font-size:11px;color:var(–tx);flex:1}
-.model-opt-size{font-family:‘IBM Plex Mono’,monospace;font-size:10px;color:var(–tx2);white-space:nowrap}
-
-/* – ACTIONS – */
+.model-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:background .15s;border:1px solid transparent}
+.model-opt:hover{background:var(--s2)}
+.model-opt.active{background:var(--acc-dim);border-color:var(--acc2)}
+.model-opt input{accent-color:var(--acc);cursor:pointer}
+.model-opt-name{font-size:11px;color:var(--tx);flex:1}
+.model-opt-size{font-size:10px;color:var(--tx2);white-space:nowrap}
+.info-card{padding:14px 15px}
+.info-card p{font-size:11px;color:var(--tx2);line-height:1.8}
 .actions{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
-
-.btn{
-display:inline-flex;align-items:center;gap:8px;
-padding:12px 28px;border-radius:8px;cursor:pointer;
-font-family:‘Syne’,sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;
-border:none;transition:all .15s;position:relative;overflow:hidden
-}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;border:none;transition:all .15s;position:relative;overflow:hidden}
 .btn:disabled{opacity:.35;cursor:not-allowed}
-.btn-primary{background:var(–acc);color:#080c10}
-.btn-primary::before{content:’’;position:absolute;inset:0;background:rgba(255,255,255,.15);opacity:0;transition:.15s}
-.btn-primary:hover:not(:disabled)::before{opacity:1}
+.btn-primary{background:var(--acc);color:#080c10}
+.btn-primary:hover:not(:disabled){filter:brightness(1.1)}
 .btn-primary:active:not(:disabled){transform:scale(.98)}
-.btn-ghost{background:transparent;color:var(–tx2);border:1px solid var(–border2)}
-.btn-ghost:hover:not(:disabled){border-color:var(–tx2);color:var(–tx)}
-.btn-load{background:var(–s2);color:var(–acc);border:1px solid var(–acc2)}
-.btn-load:hover:not(:disabled){background:var(–acc-dim)}
-
+.btn-ghost{background:transparent;color:var(--tx2);border:1px solid var(--border2)}
+.btn-ghost:hover:not(:disabled){border-color:var(--tx2);color:var(--tx)}
+.btn-load{background:var(--s2);color:var(--acc);border:1px solid var(--acc2)}
+.btn-load:hover:not(:disabled){background:var(--acc-dim)}
 .spinner{width:14px;height:14px;border:2px solid rgba(8,12,16,.3);border-top-color:#080c10;border-radius:50%;animation:spin .7s linear infinite}
-.spinner-acc{border-color:rgba(0,212,255,.2);border-top-color:var(–acc)}
+.spinner-acc{border-color:rgba(0,212,255,.2);border-top-color:var(--acc)}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* – RESULTS – */
+.err-box{grid-column:1/-1;padding:12px 15px;background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.25);border-radius:8px;color:var(--err);font-size:11.5px;line-height:1.5;display:none}
 .results{grid-column:1/-1}
-
-.entities-grid{
-padding:16px;
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
-gap:12px
-}
-
-.eg{
-background:var(–s2);border:1px solid var(–border);border-radius:9px;overflow:hidden;
-animation:fadeUp .3s ease both
-}
+.entities-grid{padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.eg{background:var(--s2);border:1px solid var(--border);border-radius:9px;overflow:hidden;animation:fadeUp .3s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-
-.eg-hdr{display:flex;align-items:center;gap:7px;padding:9px 12px;border-bottom:1px solid var(–border)}
+.eg-hdr{display:flex;align-items:center;gap:7px;padding:9px 12px;border-bottom:1px solid var(--border)}
 .eg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.eg-type{font-family:‘IBM Plex Mono’,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(–tx2);flex:1}
-.eg-ct{font-family:‘IBM Plex Mono’,monospace;font-size:9px;padding:2px 6px;border-radius:999px;background:var(–acc-dim);color:var(–acc)}
+.eg-type{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);flex:1}
+.eg-ct{font-size:9px;padding:2px 6px;border-radius:999px;background:var(--acc-dim);color:var(--acc)}
 .eg-vals{padding:9px 12px;display:flex;flex-direction:column;gap:5px}
-.eg-val{font-family:‘IBM Plex Mono’,monospace;font-size:11.5px;color:var(–tx);display:flex;align-items:flex-start;gap:6px;line-height:1.4}
-.eg-val::before{content:’>’;color:var(–tx3);flex-shrink:0}
-.eg-empty{font-family:‘IBM Plex Mono’,monospace;font-size:11px;color:var(–tx3);padding:9px 12px;font-style:italic}
-
-/* highlighted text */
+.eg-val{font-size:11.5px;color:var(--tx);display:flex;align-items:flex-start;gap:6px;line-height:1.4}
+.eg-val::before{content:'>';color:var(--tx3);flex-shrink:0}
+.eg-empty{font-size:11px;color:var(--tx3);padding:9px 12px;font-style:italic}
 .hl-panel{grid-column:1/-1}
-.hl-inner{padding:16px;font-family:‘IBM Plex Mono’,monospace;font-size:12.5px;line-height:2;white-space:pre-wrap;word-break:break-word}
-
-mark{
-padding:1px 5px;border-radius:3px;font-weight:500;cursor:default;
-}
-
-/* empty state */
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:8px;color:var(–tx3)}
-.empty-icon{font-size:28px;opacity:.4}
-.empty-txt{font-family:‘IBM Plex Mono’,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
-
-/* error */
-.err-box{
-grid-column:1/-1;display:flex;align-items:flex-start;gap:10px;
-padding:12px 15px;background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.25);
-border-radius:8px;color:var(–err);font-family:‘IBM Plex Mono’,monospace;font-size:11.5px;
-line-height:1.5;display:none
-}
-
-/* loading state in results */
+.hl-inner{padding:16px;font-size:12.5px;line-height:2;white-space:pre-wrap;word-break:break-word}
+mark{padding:1px 5px;border-radius:3px;font-weight:500;cursor:default}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:8px;color:var(--tx3)}
+.empty-txt{font-size:11px;letter-spacing:.1em;text-transform:uppercase}
 .loading-anim{display:flex;align-items:center;justify-content:center;gap:5px;padding:40px}
-.lb{width:4px;height:4px;background:var(–acc);border-radius:50%;animation:lbounce 1.2s ease-in-out infinite}
-.lb:nth-child(1){animation-delay:0s}
-.lb:nth-child(2){animation-delay:.15s}
-.lb:nth-child(3){animation-delay:.3s}
-.lb:nth-child(4){animation-delay:.45s}
+.lb{width:4px;height:4px;background:var(--acc);border-radius:50%;animation:lbounce 1.2s ease-in-out infinite}
+.lb:nth-child(1){animation-delay:0s}.lb:nth-child(2){animation-delay:.15s}.lb:nth-child(3){animation-delay:.3s}.lb:nth-child(4){animation-delay:.45s}
 @keyframes lbounce{0%,80%,100%{transform:scale(0);opacity:.3}40%{transform:scale(1.2);opacity:1}}
-
-/* copy btn */
-.btn-copy{
-padding:4px 10px;background:transparent;border:1px solid var(–border2);border-radius:5px;
-color:var(–tx2);font-family:‘IBM Plex Mono’,monospace;font-size:9px;letter-spacing:.08em;
-cursor:pointer;transition:all .15s
-}
-.btn-copy:hover{border-color:var(–acc);color:var(–acc)}
-
-/* streaming output */
-#streamBox{
-grid-column:1/-1;
-background:var(–s1);border:1px solid var(–border);border-radius:12px;
-overflow:hidden;display:none
-}
-#streamInner{
-padding:14px 16px;font-family:‘IBM Plex Mono’,monospace;font-size:11.5px;
-color:var(–tx2);line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap;
-word-break:break-word
-}
+.btn-copy{padding:4px 10px;background:transparent;border:1px solid var(--border2);border-radius:5px;color:var(--tx2);font-family:inherit;font-size:9px;letter-spacing:.08em;cursor:pointer;transition:all .15s}
+.btn-copy:hover{border-color:var(--acc);color:var(--acc)}
+#streamBox{grid-column:1/-1;background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:none}
+#streamInner{padding:14px 16px;font-size:11.5px;color:var(--tx2);line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
 </style>
-
 </head>
 <body>
 <div class="wrap">
 
-<!-- HEADER -->
-
 <header>
   <div class="hdr-top">
     <div class="logo">
-      <span class="logo-sup">Extrator de Entidades . 100% Local</span>
+      <span class="logo-sup">Extrator de Entidades - 100% Local</span>
       <h1>NER com <em>Gemma 4</em></h1>
     </div>
-    <div class="chip"><span class="chip-dot"></span>WebGPU . Transformers.js</div>
+    <div class="chip"><span class="chip-dot"></span>WebGPU - Transformers.js</div>
   </div>
-
   <div id="statusBar">
     <span class="sb-label">Modelo</span>
     <span class="sb-model" id="sbModel">onnx-community/gemma-4-E2B-it-ONNX</span>
     <span class="sb-state state-idle" id="sbState">Nao carregado</span>
-    <div id="progressWrap"><div id="progressBar"></div></div>
+    <div id="progressLabel"></div>
+    <div id="progressWrap" style="flex-basis:100%"><div id="progressBar"></div></div>
   </div>
 </header>
 
-<!-- GRID -->
-
 <div class="grid">
-
-  <!-- INPUT -->
 
   <div class="panel">
     <div class="ph">
       <span class="ph-title">Texto de Entrada</span>
       <span class="ph-meta" id="charCount">0 chars</span>
     </div>
-    <textarea id="textInput" placeholder="Cole aqui o texto para extracao de entidades...
-
-Exemplo: Joao da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, Sao Paulo, SP, Brasil. Trabalha na TechNova Ltda, CNPJ 12.345.678/0001-90. Encomenda rastreio: AA987654321BR. NF-e: 35230112345678000190550010000123411234567890”></textarea>
-
+    <textarea id="textInput"></textarea>
   </div>
-
-  <!-- MODEL / INFO -->
 
   <div class="info-panel">
     <div class="model-selector-card">
@@ -282,61 +137,47 @@ Exemplo: Joao da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, Sao Pa
         <label class="model-opt active">
           <input type="radio" name="model" value="onnx-community/gemma-4-E2B-it-ONNX" checked/>
           <span class="model-opt-name">Gemma 4 E2B</span>
-          <span class="model-opt-size">~500 MB . rapido</span>
+          <span class="model-opt-size">~500 MB - rapido</span>
         </label>
         <label class="model-opt">
           <input type="radio" name="model" value="onnx-community/gemma-4-E4B-it-ONNX"/>
           <span class="model-opt-name">Gemma 4 E4B</span>
-          <span class="model-opt-size">~1.5 GB . melhor</span>
+          <span class="model-opt-size">~1.5 GB - melhor</span>
         </label>
       </div>
     </div>
-
-```
-<div class="panel" style="background:rgba(0,212,255,.03);">
-  <div style="padding:14px 15px;">
-    <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx2);line-height:1.8">
-      [lock] Roda <strong style="color:var(--acc)">100% local</strong> no seu browser via WebGPU.<br>
-      Nenhum dado sai da sua maquina.<br><br>
-      >> Requer Chrome 113+ ou Edge 113+<br>
-      com WebGPU habilitado.<br><br>
-      [pkg] O modelo e baixado do HuggingFace<br>
-      e <strong style="color:var(--ok)">cacheado</strong> no browser apos o 1o uso.
-    </p>
+    <div class="panel">
+      <div class="info-card">
+        <p>
+          Roda 100% local via WebGPU.<br>
+          Nenhum dado sai da sua maquina.<br><br>
+          Requer Chrome 113+ ou Edge 113+.<br><br>
+          O modelo e baixado do HuggingFace<br>
+          e <strong style="color:var(--ok)">cacheado localmente</strong>.<br>
+          Se interromper, retoma de onde parou.
+        </p>
+      </div>
+    </div>
   </div>
-</div>
-```
-
-  </div>
-
-  <!-- ACTIONS -->
 
   <div class="actions">
     <button class="btn btn-ghost" id="btnClear">Limpar</button>
     <button class="btn btn-load" id="btnLoad">
-      <span id="loadIcon">v</span>
+      <span id="loadIcon">&#x2193;</span>
       <span id="loadTxt">Carregar Modelo</span>
     </button>
     <button class="btn btn-primary" id="btnExtract" disabled>
-      <span id="extractIcon">>></span>
+      <span id="extractIcon">&#x25B6;</span>
       <span id="extractTxt">Extrair Entidades</span>
     </button>
   </div>
 
-  <!-- ERROR -->
-
   <div class="err-box" id="errBox"></div>
 
-  <!-- STREAM (raw output) -->
-
   <div id="streamBox">
-    <div class="ph">
-      <span class="ph-title">Saida bruta do modelo</span>
-    </div>
+    <div class="ph"><span class="ph-title">Saida do modelo</span></div>
     <div id="streamInner"></div>
   </div>
-
-  <!-- RESULTS -->
 
   <div class="panel results" id="resultsPanel" style="display:none">
     <div class="ph">
@@ -344,19 +185,17 @@ Exemplo: Joao da Silva, CPF 123.456.789-00, reside na Rua das Flores, 42, Sao Pa
       <button class="btn-copy" id="btnCopy">Copiar JSON</button>
     </div>
     <div id="resultsInner">
-      <div class="empty"><span class="empty-icon">o</span><span class="empty-txt">Aguardando analise</span></div>
+      <div class="empty"><span class="empty-txt">Aguardando analise</span></div>
     </div>
   </div>
-
-  <!-- HIGHLIGHTED TEXT -->
 
   <div class="panel hl-panel" id="hlPanel" style="display:none">
     <div class="ph"><span class="ph-title">Texto Anotado</span></div>
     <div class="hl-inner" id="hlInner"></div>
   </div>
 
-</div><!-- /grid -->
-</div><!-- /wrap -->
+</div>
+</div>
 
 <script type="module">
 import {
@@ -365,151 +204,187 @@ import {
   TextStreamer
 } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0';
 
-// -- ENTITY CONFIG --------------------------------------------------
 const ENTITIES = [
-  {key:'pessoa',    label:'Pessoa',          color:'#a78bfa'},
-  {key:'empresa',   label:'Empresa',         color:'#fb923c'},
-  {key:'endereco',  label:'Endereco',        color:'#38bdf8'},
-  {key:'cidade',    label:'Cidade',          color:'#34d399'},
-  {key:'estado',    label:'Estado',          color:'#fbbf24'},
-  {key:'pais',      label:'Pais',            color:'#f472b6'},
-  {key:'nascimento',label:'Ano Nasc.',       color:'#c084fc'},
-  {key:'cpf',       label:'CPF',             color:'#2dd4bf'},
-  {key:'cnpj',      label:'CNPJ',            color:'#f97316'},
+  {key:'pessoa',    label:'Pessoa',           color:'#a78bfa'},
+  {key:'empresa',   label:'Empresa',          color:'#fb923c'},
+  {key:'endereco',  label:'Endereco',         color:'#38bdf8'},
+  {key:'cidade',    label:'Cidade',           color:'#34d399'},
+  {key:'estado',    label:'Estado',           color:'#fbbf24'},
+  {key:'pais',      label:'Pais',             color:'#f472b6'},
+  {key:'nascimento',label:'Ano Nasc.',        color:'#c084fc'},
+  {key:'cpf',       label:'CPF',              color:'#2dd4bf'},
+  {key:'cnpj',      label:'CNPJ',             color:'#f97316'},
   {key:'rastreio',  label:'Rastreio Correios',color:'#4ade80'},
-  {key:'cte',       label:'CT-e',            color:'#f87171'},
-  {key:'nfe',       label:'NF-e',            color:'#60a5fa'},
+  {key:'cte',       label:'CT-e',             color:'#f87171'},
+  {key:'nfe',       label:'NF-e',             color:'#60a5fa'},
 ];
 
-const PROMPT_SYSTEM = `Voce e um extrator de entidades nomeadas especializado em textos brasileiros.
-Retorne SOMENTE um objeto JSON valido, sem markdown, sem explicacoes, sem texto fora do JSON.
-Formato EXATO (todos os campos obrigatorios):
-{"pessoa":[],"empresa":[],"endereco":[],"cidade":[],"estado":[],"pais":[],"nascimento":[],"cpf":[],"cnpj":[],"rastreio":[],"cte":[],"nfe":[]}
-Regras: preserve valores exatamente como aparecem; sem duplicatas por chave; arrays vazios se nao encontrado.`;
+const PROMPT_SYSTEM = [
+  'Voce e um extrator de entidades nomeadas especializado em textos brasileiros.',
+  'Retorne SOMENTE um objeto JSON valido, sem markdown, sem explicacoes, sem texto fora do JSON.',
+  'Formato EXATO (todos os campos obrigatorios):',
+  '{"pessoa":[],"empresa":[],"endereco":[],"cidade":[],"estado":[],"pais":[],"nascimento":[],"cpf":[],"cnpj":[],"rastreio":[],"cte":[],"nfe":[]}',
+  'Regras: preserve valores exatamente como aparecem; sem duplicatas por chave; arrays vazios se nao encontrado.'
+].join('\n');
 
-// -- DOM ------------------------------------------------------------
 const $ = id => document.getElementById(id);
-const textInput   = $('textInput');
-const charCount   = $('charCount');
-const btnLoad     = $('btnLoad');
-const btnExtract  = $('btnExtract');
-const btnClear    = $('btnClear');
-const btnCopy     = $('btnCopy');
-const sbModel     = $('sbModel');
-const sbState     = $('sbState');
-const progressWrap= $('progressWrap');
-const progressBar = $('progressBar');
-const errBox      = $('errBox');
-const streamBox   = $('streamBox');
-const streamInner = $('streamInner');
-const resultsPanel= $('resultsPanel');
-const resultsInner= $('resultsInner');
-const hlPanel     = $('hlPanel');
-const hlInner     = $('hlInner');
-const loadIcon    = $('loadIcon');
-const loadTxt     = $('loadTxt');
-const extractIcon = $('extractIcon');
-const extractTxt  = $('extractTxt');
+const ti    = $('textInput');
+const cc    = $('charCount');
+const btnL  = $('btnLoad');
+const btnE  = $('btnExtract');
+const btnC  = $('btnClear');
+const btnCp = $('btnCopy');
+const sbM   = $('sbModel');
+const sbS   = $('sbState');
+const pWrap = $('progressWrap');
+const pBar  = $('progressBar');
+const pLbl  = $('progressLabel');
+const errB  = $('errBox');
+const stBox = $('streamBox');
+const stIn  = $('streamInner');
+const resP  = $('resultsPanel');
+const resI  = $('resultsInner');
+const hlP   = $('hlPanel');
+const hlI   = $('hlInner');
 
-// -- STATE ----------------------------------------------------------
-let processor = null;
-let model     = null;
-let isLoading = false;
-let isRunning = false;
-let lastResult= null;
+// Set textarea content via JS - evita problemas com parsing de atributos HTML
+ti.placeholder = 'Cole aqui o texto para extracao de entidades...';
+ti.value = [
+  'Joao Carlos da Silva, nascido em 1985, CPF 123.456.789-00,',
+  'reside na Av. Paulista, 1000, apto 42, Sao Paulo, SP, Brasil.',
+  'E socio da TechNova Solucoes Ltda, CNPJ 12.345.678/0001-90, localizada em Campinas, SP.',
+  'Encomenda rastreio AA987654321BR com CT-e 35230112345678000190570010000012341000012345',
+  'e NF-e 35230112345678000190550010000123411234567890.',
+  'Maria Oliveira, CPF 987.654.321-00, diretora da filial em Lisboa, Portugal.'
+].join('\n');
+cc.textContent = ti.value.length + ' chars';
+
+let processor = null, model = null;
+let isLoading = false, isRunning = false, lastResult = null;
 let currentModelId = 'onnx-community/gemma-4-E2B-it-ONNX';
 
-// -- UTILS ----------------------------------------------------------
-function setState(s, label){
-  sbState.className = 'sb-state state-' + s;
-  sbState.textContent = label;
+const setState = (cls, txt) => { sbS.className = 'sb-state state-' + cls; sbS.textContent = txt; };
+const showErr  = msg => { errB.style.display = 'block'; errB.textContent = '(!) ' + msg; };
+const hideErr  = ()  => { errB.style.display = 'none'; };
+
+function setProgress(pct, label) {
+  pWrap.style.display = 'block';
+  pBar.style.width = Math.min(pct, 100) + '%';
+  if (label) { pLbl.style.display = 'block'; pLbl.textContent = label; }
+}
+function hideProgress() {
+  setTimeout(() => {
+    pWrap.style.display = 'none';
+    pLbl.style.display = 'none';
+    pBar.style.width = '0%';
+    pLbl.textContent = '';
+  }, 1500);
 }
 
-function showErr(msg){ errBox.style.display='flex'; errBox.textContent='(!) '+msg }
-function hideErr(){ errBox.style.display='none' }
-
-function setLoadBtn(loading){
-  btnLoad.disabled = loading || isRunning;
-  loadIcon.textContent = loading ? '' : 'v';
-  loadTxt.textContent  = loading ? 'Carregando...' : 'Carregar Modelo';
-  if(loading) loadIcon.innerHTML = '<div class="spinner spinner-acc"></div>';
+function setLoadBtn(loading) {
+  btnL.disabled = loading || isRunning;
+  const icon = $('loadIcon');
+  const txt  = $('loadTxt');
+  if (loading) {
+    icon.innerHTML = '<div class="spinner spinner-acc"></div>';
+    txt.textContent = 'Carregando...';
+  } else {
+    icon.textContent = model ? 'OK' : '\u2193';
+    txt.textContent  = model ? 'Recarregar' : 'Carregar Modelo';
+  }
+}
+function setExtBtn(running) {
+  btnE.disabled = running || !model;
+  const icon = $('extractIcon');
+  const txt  = $('extractTxt');
+  if (running) {
+    icon.innerHTML = '<div class="spinner"></div>';
+    txt.textContent = 'Processando...';
+  } else {
+    icon.textContent = '\u25B6';
+    txt.textContent  = 'Extrair Entidades';
+  }
 }
 
-function setExtractBtn(running){
-  btnExtract.disabled = running || !model;
-  extractIcon.textContent = running ? '' : '>>';
-  extractTxt.textContent  = running ? 'Processando...' : 'Extrair Entidades';
-  if(running) extractIcon.innerHTML = '<div class="spinner"></div>';
-}
-
-// Update model-opt active state
 document.querySelectorAll('.model-opt').forEach(el => {
   el.addEventListener('click', () => {
     document.querySelectorAll('.model-opt').forEach(e => e.classList.remove('active'));
     el.classList.add('active');
-    currentModelId = el.querySelector('input').value;
-    sbModel.textContent = currentModelId;
-    // reset model if switching
-    if(model){ model=null; processor=null; setState('idle','Nao carregado'); btnExtract.disabled=true; }
+    const newId = el.querySelector('input').value;
+    if (newId !== currentModelId) {
+      currentModelId = newId;
+      sbM.textContent = newId;
+      model = null; processor = null;
+      setState('idle', 'Nao carregado');
+      btnE.disabled = true;
+      setLoadBtn(false);
+    }
   });
 });
 
-textInput.addEventListener('input', () => {
-  charCount.textContent = textInput.value.length + ' chars';
+ti.addEventListener('input', () => { cc.textContent = ti.value.length + ' chars'; });
+
+btnC.addEventListener('click', () => {
+  ti.value = ''; cc.textContent = '0 chars';
+  resP.style.display = 'none';
+  hlP.style.display = 'none';
+  stBox.style.display = 'none';
+  hideErr(); lastResult = null;
 });
 
-btnClear.addEventListener('click', () => {
-  textInput.value=''; charCount.textContent='0 chars';
-  resultsPanel.style.display='none';
-  hlPanel.style.display='none';
-  streamBox.style.display='none';
-  hideErr(); lastResult=null;
-});
-
-btnCopy.addEventListener('click', () => {
-  if(!lastResult) return;
-  navigator.clipboard.writeText(JSON.stringify(lastResult,null,2)).then(() => {
-    btnCopy.textContent='Copiado!';
-    setTimeout(()=>btnCopy.textContent='Copiar JSON',2000);
+btnCp.addEventListener('click', () => {
+  if (!lastResult) return;
+  navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => {
+    btnCp.textContent = 'Copiado!';
+    setTimeout(() => { btnCp.textContent = 'Copiar JSON'; }, 2000);
   });
 });
 
-// -- LOAD MODEL -----------------------------------------------------
-btnLoad.addEventListener('click', loadModel);
+// LOAD MODEL
+// Transformers.js v4 usa o Cache Storage do browser automaticamente.
+// Arquivos ja baixados ficam em cache e o download retoma de onde parou.
+btnL.addEventListener('click', loadModel);
 
-async function loadModel(){
-  if(isLoading) return;
+async function loadModel() {
+  if (isLoading) return;
   isLoading = true;
   hideErr();
   setLoadBtn(true);
-  setState('loading','Carregando...');
-  progressWrap.style.display='block';
-  progressBar.style.width='0%';
+  setState('loading', 'Iniciando...');
+  setProgress(0, 'Conectando ao HuggingFace...');
 
   try {
     const mid = currentModelId;
+    let filesDone = 0, filesTotal = 0, lastFilePct = 0;
 
-    let lastPct = 0;
     const onProgress = (info) => {
-      // v4 progress_callback receives objects with different shapes
-      if (info.status === 'progress') {
-        const pct = Math.round(info.progress || 0);
-        if (pct > lastPct) { lastPct = pct; progressBar.style.width = pct + '%'; }
-        sbState.textContent = `Baixando... ${pct}%`;
+      if (info.status === 'initiate') {
+        filesTotal++;
+        const fname = (info.file || '').split('/').pop();
+        sbS.textContent = 'Aguardando: ' + fname;
+      } else if (info.status === 'progress') {
+        lastFilePct = Math.round(info.progress || 0);
+        const overall = filesTotal > 1
+          ? Math.round((filesDone * 100 + lastFilePct) / filesTotal)
+          : lastFilePct;
+        setProgress(overall, lastFilePct + '% - ' + ((info.file || '').split('/').pop()));
+        setState('loading', 'Baixando... ' + overall + '%');
+      } else if (info.status === 'done') {
+        filesDone++;
+        lastFilePct = 0;
       } else if (info.status === 'progress_total') {
         const pct = Math.round(info.progress || 0);
-        if (pct > lastPct) { lastPct = pct; progressBar.style.width = pct + '%'; }
-        sbState.textContent = `Carregando... ${pct}%`;
-      } else if (info.status === 'initiate') {
-        sbState.textContent = `Iniciando: ${info.file || ''}`;
+        setProgress(pct, 'GPU: ' + pct + '%');
+        setState('loading', 'Carregando GPU... ' + pct + '%');
       } else if (info.status === 'loading') {
-        sbState.textContent = 'Carregando pesos...';
-      } else if (info.status === 'done') {
-        sbState.textContent = 'Processando...';
+        setState('loading', 'Carregando na GPU...');
+        setProgress(99, 'Inicializando...');
       }
     };
 
-    processor = await AutoProcessor.from_pretrained(mid);
+    processor = await AutoProcessor.from_pretrained(mid, {
+      progress_callback: onProgress,
+    });
 
     model = await Gemma4ForConditionalGeneration.from_pretrained(mid, {
       dtype: 'q4f16',
@@ -517,62 +392,50 @@ async function loadModel(){
       progress_callback: onProgress,
     });
 
-    progressBar.style.width='100%';
-    setState('ready','Pronto OK');
-    btnExtract.disabled = false;
-    btnLoad.textContent = 'OK Recarregar';
-    loadIcon.textContent = 'OK';
-    loadTxt.textContent = 'Recarregar';
+    setProgress(100, 'Pronto!');
+    setState('ready', 'Pronto OK');
+    btnE.disabled = false;
 
-  } catch(e) {
+  } catch (e) {
     console.error(e);
-    setState('error','Erro');
-    showErr(e.message || 'Falha ao carregar o modelo. Verifique se seu browser suporta WebGPU.');
+    setState('error', 'Erro');
+    const msg = String(e.message || e);
+    if (msg.toLowerCase().includes('webgpu')) {
+      showErr('WebGPU nao disponivel. Use Chrome 113+ ou Edge 113+. Verifique chrome://flags/#enable-unsafe-webgpu');
+    } else {
+      showErr('Falha ao carregar: ' + msg);
+    }
   } finally {
     isLoading = false;
     setLoadBtn(false);
-    setTimeout(()=>{ progressWrap.style.display='none'; progressBar.style.width='0%'; }, 1500);
+    hideProgress();
   }
 }
 
-// -- EXTRACT --------------------------------------------------------
-btnExtract.addEventListener('click', runExtract);
+// EXTRACT
+btnE.addEventListener('click', runExtract);
 
-async function runExtract(){
-  const text = textInput.value.trim();
-  if(!text){ showErr('Insira um texto para analise.'); return; }
-  if(!model){ showErr('Carregue o modelo primeiro.'); return; }
-  if(isRunning) return;
+async function runExtract() {
+  const text = ti.value.trim();
+  if (!text) { showErr('Insira um texto para analise.'); return; }
+  if (!model) { showErr('Carregue o modelo primeiro.'); return; }
+  if (isRunning) return;
 
   isRunning = true;
   hideErr();
-  setExtractBtn(true);
-  setState('running','Inferindo...');
+  setExtBtn(true);
+  setState('running', 'Inferindo...');
 
-  // show stream box
-  streamBox.style.display='block';
-  streamInner.textContent = '';
-
-  // Show loading in results
-  resultsPanel.style.display='block';
-  resultsInner.innerHTML = `
-    <div class="loading-anim">
-      <div class="lb"></div><div class="lb"></div>
-      <div class="lb"></div><div class="lb"></div>
-    </div>`;
-  hlPanel.style.display='none';
+  stBox.style.display = 'block';
+  stIn.textContent = '';
+  resP.style.display = 'block';
+  resI.innerHTML = '<div class="loading-anim"><div class="lb"></div><div class="lb"></div><div class="lb"></div><div class="lb"></div></div>';
+  hlP.style.display = 'none';
 
   try {
-    // Build a text-only message (no image/audio needed for NER)
     const messages = [
-      {
-        role: 'system',
-        content: PROMPT_SYSTEM
-      },
-      {
-        role: 'user',
-        content: `Texto:\n${text}`
-      }
+      { role: 'system', content: PROMPT_SYSTEM },
+      { role: 'user',   content: 'Texto:\n' + text }
     ];
 
     const prompt = processor.apply_chat_template(messages, {
@@ -580,20 +443,16 @@ async function runExtract(){
       add_generation_prompt: true,
     });
 
-    // For text-only input in v4, pass just the prompt string
-    const inputs = await processor(prompt, null, null, {
-      add_special_tokens: false,
-    });
+    const inputs = await processor(prompt, null, null, { add_special_tokens: false });
 
     let generated = '';
-
     const streamer = new TextStreamer(processor.tokenizer, {
       skip_prompt: true,
       skip_special_tokens: false,
       callback_function: (chunk) => {
         generated += chunk;
-        streamInner.textContent = generated;
-        streamInner.scrollTop = streamInner.scrollHeight;
+        stIn.textContent = generated;
+        stIn.scrollTop = stIn.scrollHeight;
       }
     });
 
@@ -604,135 +463,115 @@ async function runExtract(){
       streamer,
     });
 
-    // Decode only newly generated tokens (skip the prompt)
     const inputLen = inputs.input_ids.dims.at(-1);
     const decoded = processor.batch_decode(
       outputs.slice(null, [inputLen, null]),
       { skip_special_tokens: true }
     );
     generated = decoded[0] || generated;
-    streamInner.textContent = generated;
+    stIn.textContent = generated;
 
-    // parse result
     const parsed = parseJSON(generated);
-    if(parsed){
+    if (parsed) {
       lastResult = parsed;
       renderResults(parsed, text);
     } else {
       showErr('Modelo retornou resposta invalida. Tente novamente.');
-      resultsPanel.style.display='none';
+      resP.style.display = 'none';
     }
-
-  } catch(e){
+  } catch (e) {
     console.error(e);
     showErr(e.message || 'Erro durante a inferencia.');
-    resultsPanel.style.display='none';
+    resP.style.display = 'none';
   } finally {
     isRunning = false;
-    setExtractBtn(false);
-    setState('ready','Pronto OK');
+    setExtBtn(false);
+    setState('ready', 'Pronto OK');
   }
 }
 
-// -- PARSE JSON -----------------------------------------------------
-function parseJSON(raw){
-  try{
-    let t = raw.trim()
-      .replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
-    // strip thinking tags if present
+function parseJSON(raw) {
+  try {
+    let t = raw.trim().replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
     t = t.replace(/<\|channel>thought[\s\S]*?<channel\|>/g,'').trim();
     const m = t.match(/\{[\s\S]*\}/);
-    if(m) return JSON.parse(m[0]);
-  }catch(e){ console.warn('JSON parse failed:',e) }
+    if (m) return JSON.parse(m[0]);
+  } catch(e) { console.warn('JSON parse failed:', e); }
   return null;
 }
 
-// -- RENDER ---------------------------------------------------------
-function renderResults(data, originalText){
-  resultsPanel.style.display='block';
-
+function renderResults(data, originalText) {
+  resP.style.display = 'block';
   const grid = document.createElement('div');
-  grid.className='entities-grid';
-
-  ENTITIES.forEach((et,i) => {
+  grid.className = 'entities-grid';
+  ENTITIES.forEach((et, i) => {
     const vals = data[et.key] || [];
     const card = document.createElement('div');
-    card.className='eg';
-    card.style.animationDelay=(i*.04)+'s';
-
-    card.innerHTML=`
-      <div class="eg-hdr">
-        <span class="eg-dot" style="background:${et.color}"></span>
-        <span class="eg-type">${et.label}</span>
-        <span class="eg-ct">${vals.length}</span>
-      </div>`;
-
-    if(vals.length===0){
-      card.innerHTML+=`<div class="eg-empty">nenhuma encontrada</div>`;
+    card.className = 'eg';
+    card.style.animationDelay = (i * 0.04) + 's';
+    const hdr = document.createElement('div');
+    hdr.className = 'eg-hdr';
+    hdr.innerHTML =
+      '<span class="eg-dot" style="background:' + et.color + '"></span>' +
+      '<span class="eg-type">' + et.label + '</span>' +
+      '<span class="eg-ct">' + vals.length + '</span>';
+    card.appendChild(hdr);
+    if (vals.length === 0) {
+      const em = document.createElement('div');
+      em.className = 'eg-empty';
+      em.textContent = 'nenhuma encontrada';
+      card.appendChild(em);
     } else {
-      const vd=document.createElement('div');
-      vd.className='eg-vals';
-      vals.forEach(v=>{
-        const el=document.createElement('div');
-        el.className='eg-val';
-        el.textContent=v;
+      const vd = document.createElement('div');
+      vd.className = 'eg-vals';
+      vals.forEach(v => {
+        const el = document.createElement('div');
+        el.className = 'eg-val';
+        el.textContent = v;
         vd.appendChild(el);
       });
       card.appendChild(vd);
     }
-
     grid.appendChild(card);
   });
-
-  resultsInner.innerHTML='';
-  resultsInner.appendChild(grid);
-
+  resI.innerHTML = '';
+  resI.appendChild(grid);
   renderHighlight(originalText, data);
 }
 
-function escHtml(s){
+function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function renderHighlight(text, data){
-  const spans=[];
-  ENTITIES.forEach(et=>{
-    (data[et.key]||[]).forEach(val=>{
-      if(!val||val.length<2) return;
-      const re=new RegExp(val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+function renderHighlight(text, data) {
+  const spans = [];
+  ENTITIES.forEach(et => {
+    (data[et.key] || []).forEach(val => {
+      if (!val || val.length < 2) return;
+      const re = new RegExp(val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
       let m;
-      while((m=re.exec(text))!==null){
-        spans.push({start:m.index,end:m.index+m[0].length,label:et.label,color:et.color,val:m[0]});
+      while ((m = re.exec(text)) !== null) {
+        spans.push({start:m.index, end:m.index+m[0].length, label:et.label, color:et.color, val:m[0]});
       }
     });
   });
-
-  spans.sort((a,b)=>a.start-b.start);
-  const clean=[];
-  let cursor=0;
-  for(const sp of spans){
-    if(sp.start>=cursor){ clean.push(sp); cursor=sp.end; }
+  spans.sort((a,b) => a.start - b.start);
+  const clean = [];
+  let cursor = 0;
+  for (const sp of spans) {
+    if (sp.start >= cursor) { clean.push(sp); cursor = sp.end; }
   }
-
-  let html='',pos=0;
-  for(const sp of clean){
-    if(sp.start>pos) html+=escHtml(text.slice(pos,sp.start));
-    html+=`<mark title="${sp.label}" style="background:${sp.color}22;color:${sp.color};border:1px solid ${sp.color}44">${escHtml(sp.val)}<sup style="font-size:8px;opacity:.7;margin-left:2px">${sp.label}</sup></mark>`;
-    pos=sp.end;
+  let html = '', pos = 0;
+  for (const sp of clean) {
+    if (sp.start > pos) html += esc(text.slice(pos, sp.start));
+    html += '<mark title="' + sp.label + '" style="background:' + sp.color + '22;color:' + sp.color + ';border:1px solid ' + sp.color + '44">' +
+      esc(sp.val) + '<sup style="font-size:8px;opacity:.7;margin-left:2px">' + sp.label + '</sup></mark>';
+    pos = sp.end;
   }
-  if(pos<text.length) html+=escHtml(text.slice(pos));
-
-  hlInner.innerHTML=html;
-  hlPanel.style.display='block';
+  if (pos < text.length) html += esc(text.slice(pos));
+  hlI.innerHTML = html;
+  hlP.style.display = 'block';
 }
-
-// -- INIT -----------------------------------------------------------
-textInput.value = `Joao Carlos da Silva, nascido em 1985, CPF 123.456.789-00, reside na Av. Paulista, 1000, apto 42, Sao Paulo, SP, Brasil.
-E socio da TechNova Solucoes Ltda, CNPJ 12.345.678/0001-90, localizada em Campinas, SP.
-Encomenda com rastreio AA987654321BR despachada com CT-e 35230112345678000190570010000012341000012345 e NF-e 35230112345678000190550010000123411234567890.
-Maria Oliveira, CPF 987.654.321-00, e diretora da filial em Lisboa, Portugal.`;
-charCount.textContent = textInput.value.length + ' chars';
 </script>
-
 </body>
 </html>
