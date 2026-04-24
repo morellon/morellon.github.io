@@ -3,531 +3,808 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NER . Gemma 4 Local</title>
+<title>NER - Gemma 4 Local</title>
 <style>
-@import url('https://fonts.cdnfonts.com/css/ibm-plex-mono');
-@import url('https://fonts.cdnfonts.com/css/syne');
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-  --bg:#080c10; --s1:#0d1318; --s2:#111a22; --border:#1a2632; --border2:#223040;
-  --acc:#00d4ff; --acc2:#0099cc; --acc-dim:rgba(0,212,255,.08); --acc-glow:rgba(0,212,255,.18);
-  --ok:#00e5a0; --warn:#ffb020; --err:#ff4757;
-  --tx:#dce8f0; --tx2:#6a8ea8; --tx3:#2a4560;
-
-  --c-pessoa:#a78bfa; --c-empresa:#fb923c; --c-endereco:#38bdf8; --c-cidade:#34d399;
-  --c-estado:#fbbf24; --c-pais:#f472b6; --c-nasc:#c084fc; --c-cpf:#2dd4bf;
-  --c-cnpj:#f97316; --c-rastreio:#4ade80; --c-cte:#f87171; --c-nfe:#60a5fa;
+  --bg:#080c10;--s1:#0d1318;--s2:#111a22;--s3:#0a1520;
+  --border:#1a2632;--border2:#223040;--border3:#2a3d50;
+  --acc:#00d4ff;--acc2:#0099cc;--acc-dim:rgba(0,212,255,.08);--acc-glow:rgba(0,212,255,.18);
+  --ok:#00e5a0;--ok2:rgba(0,229,160,.1);
+  --warn:#ffb020;--warn2:rgba(255,176,32,.1);
+  --err:#ff4757;--err2:rgba(255,71,87,.08);
+  --tx:#dce8f0;--tx2:#6a8ea8;--tx3:#2a4560;
 }
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex Mono',Consolas,monospace;font-size:14px;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(rgba(0,212,255,.05) 1px,transparent 1px);background-size:28px 28px}
+.wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:28px 20px 80px}
 
-html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Syne',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden}
-
-body::after{ content:'';position:fixed;inset:0;pointer-events:none;z-index:999; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px); }
-body::before{ content:'';position:fixed;inset:0;pointer-events:none;z-index:0; background-image:radial-gradient(rgba(0,212,255,.06) 1px,transparent 1px); background-size:28px 28px; }
-
-.wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:32px 20px 80px}
-header{margin-bottom:40px}
-.hdr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
-
-.logo{display:flex;flex-direction:column;gap:2px}
-.logo-sup{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc);opacity:.7}
-h1{font-size:clamp(24px,5vw,38px);font-weight:800;letter-spacing:-.04em;line-height:1.05}
+/* -- HEADER -- */
+header{margin-bottom:32px}
+.hdr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo-sup{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc);opacity:.7;display:block;margin-bottom:2px}
+h1{font-size:clamp(22px,4.5vw,34px);font-weight:800;letter-spacing:-.04em;line-height:1.05}
 h1 em{font-style:normal;color:var(--acc)}
+.hdr-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:var(--acc-dim);border:1px solid var(--acc2);font-size:10px;letter-spacing:.07em;color:var(--acc);white-space:nowrap}
+.chip-dot{width:6px;height:6px;background:var(--acc);border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.btn-icon{background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--tx2);padding:6px 10px;cursor:pointer;font-size:12px;transition:all .15s;font-family:inherit}
+.btn-icon:hover{border-color:var(--acc);color:var(--acc)}
 
-.chip{ display:inline-flex;align-items:center;gap:7px; padding:7px 14px;border-radius:999px; background:var(--acc-dim);border:1px solid var(--acc2); font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--acc); white-space:nowrap;flex-shrink:0 }
-.chip-dot{width:7px;height:7px;background:var(--acc);border-radius:50%}
+/* -- STATUS BAR -- */
+#statusBar{margin-top:16px;padding:10px 14px;background:var(--s1);border:1px solid var(--border);border-radius:9px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sb-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);white-space:nowrap}
+.sb-model{font-size:11px;color:var(--acc);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-badge{font-size:10px;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid}
+.badge-idle{background:rgba(106,142,168,.1);color:var(--tx2);border-color:var(--border2)}
+.badge-loading{background:var(--warn2);color:var(--warn);border-color:rgba(255,176,32,.3)}
+.badge-ready{background:var(--ok2);color:var(--ok);border-color:rgba(0,229,160,.3)}
+.badge-error{background:var(--err2);color:var(--err);border-color:rgba(255,71,87,.3)}
+.badge-running{background:var(--acc-dim);color:var(--acc);border-color:rgba(0,212,255,.3)}
+#tabs-count{font-size:10px;color:var(--tx3);white-space:nowrap}
+#queue-count{font-size:10px;color:var(--tx2);white-space:nowrap;display:none}
+#prog-wrap{flex-basis:100%;height:3px;background:var(--border);border-radius:2px;overflow:hidden;display:none}
+#prog-bar{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));width:0%;transition:width .35s;border-radius:2px}
+#prog-lbl{flex-basis:100%;font-size:10px;color:var(--tx2);display:none}
 
-#statusBar{ margin-top:20px;padding:12px 16px; background:var(--s1);border:1px solid var(--border);border-radius:10px; display:flex;align-items:center;gap:12px;flex-wrap:wrap }
-.sb-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);white-space:nowrap}
-.sb-model{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--acc);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sb-state{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:999px;white-space:nowrap}
-.state-idle{background:rgba(106,142,168,.12);color:var(--tx2);border:1px solid var(--border2)}
-.state-loading{background:rgba(255,176,32,.1);color:var(--warn);border:1px solid rgba(255,176,32,.3)}
-.state-ready{background:rgba(0,229,160,.1);color:var(--ok);border:1px solid rgba(0,229,160,.3)}
-.state-error{background:rgba(255,71,87,.1);color:var(--err);border:1px solid rgba(255,71,87,.3)}
-.state-running{background:rgba(0,212,255,.1);color:var(--acc);border:1px solid rgba(0,212,255,.3)}
+/* -- GRID -- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+.full{grid-column:1/-1}
 
-#progressWrap{width:100%;height:3px;background:var(--border);border-radius:3px;overflow:hidden;display:none}
-#progressBar{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));width:0%;transition:width .3s;border-radius:3px}
-
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:620px){.grid{grid-template-columns:1fr}}
-
-.panel{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s}
-.panel:focus-within{border-color:var(--acc2);box-shadow:0 0 0 1px var(--acc2),0 0 24px var(--acc-glow)}
-
-.ph{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--border);background:var(--s2)}
-.ph-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx2)}
-.ph-meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx3)}
-
-textarea{ display:block;width:100%;min-height:280px;background:transparent;border:none;outline:none; resize:vertical;color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:12.5px; line-height:1.75;padding:16px;caret-color:var(--acc) }
+/* -- PANEL -- */
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.panel:focus-within{border-color:var(--acc2);box-shadow:0 0 0 1px var(--acc2),0 0 20px var(--acc-glow)}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--s2)}
+.ph-title{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--tx2)}
+.ph-meta{font-size:10px;color:var(--tx3)}
+textarea{display:block;width:100%;min-height:260px;background:transparent;border:none;outline:none;resize:vertical;color:var(--tx);font-family:inherit;font-size:12.5px;line-height:1.75;padding:14px;caret-color:var(--acc)}
 textarea::placeholder{color:var(--tx3)}
 
-/* Model Opts e Inputs de Configuração */
-.info-panel{display:flex;flex-direction:column;gap:10px}
-.model-selector-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.model-selector-card .ph{border-bottom:1px solid var(--border)}
-.model-opts{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
-.model-opt{ display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px; cursor:pointer;transition:background .15s;border:1px solid transparent }
+/* -- MODEL OPTS -- */
+.model-opts{padding:8px 12px;display:flex;flex-direction:column;gap:5px}
+.model-opt{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:6px;cursor:pointer;border:1px solid transparent;transition:background .15s}
 .model-opt:hover{background:var(--s2)}
 .model-opt.active{background:var(--acc-dim);border-color:var(--acc2)}
-.model-opt input{accent-color:var(--acc);cursor:pointer}
-.model-opt-name{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx);flex:1}
-.model-opt-size{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx2);white-space:nowrap}
+.model-opt input{accent-color:var(--acc);cursor:pointer;flex-shrink:0}
+.model-opt-name{font-size:11px;color:var(--tx);flex:1}
+.model-opt-size{font-size:10px;color:var(--tx2);white-space:nowrap}
 
-.config-input { width: 100%; background: var(--s2); border: 1px solid var(--border); color: var(--tx); padding: 6px 10px; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; outline: none; margin-top: 5px; }
-.config-input:focus { border-color: var(--acc2); }
-.config-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--tx2); }
+/* -- INFO CARD -- */
+.info-card{padding:12px 14px;font-size:11px;color:var(--tx2);line-height:1.8}
+.info-card strong{color:var(--ok)}
 
-.actions{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
-
-.btn{ display:inline-flex;align-items:center;gap:8px; padding:12px 28px;border-radius:8px;cursor:pointer; font-family:'Syne',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em; border:none;transition:all .15s;position:relative;overflow:hidden }
-.btn:disabled{opacity:.35;cursor:not-allowed}
+/* -- ACTIONS -- */
+.actions{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:4px 0}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:11px 26px;border-radius:7px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.05em;border:none;transition:all .15s}
+.btn:disabled{opacity:.3;cursor:not-allowed}
 .btn-primary{background:var(--acc);color:#080c10}
-.btn-primary::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.15);opacity:0;transition:.15s}
-.btn-primary:hover:not(:disabled)::before{opacity:1}
-.btn-primary:active:not(:disabled){transform:scale(.98)}
+.btn-primary:hover:not(:disabled){filter:brightness(1.12)}
 .btn-ghost{background:transparent;color:var(--tx2);border:1px solid var(--border2)}
 .btn-ghost:hover:not(:disabled){border-color:var(--tx2);color:var(--tx)}
-.btn-load{background:var(--s2);color:var(--acc);border:1px solid var(--acc2)}
-.btn-load:hover:not(:disabled){background:var(--acc-dim)}
-
-.spinner{width:14px;height:14px;border:2px solid rgba(8,12,16,.3);border-top-color:#080c10;border-radius:50%;animation:spin .7s linear infinite}
+.btn-teal{background:var(--s2);color:var(--acc);border:1px solid var(--acc2)}
+.btn-teal:hover:not(:disabled){background:var(--acc-dim)}
+.spinner{width:13px;height:13px;border:2px solid rgba(8,12,16,.3);border-top-color:#080c10;border-radius:50%;animation:spin .7s linear infinite}
 .spinner-acc{border-color:rgba(0,212,255,.2);border-top-color:var(--acc)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.results{grid-column:1/-1}
-.entities-grid{ padding:16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px }
-.eg{ background:var(--s2);border:1px solid var(--border);border-radius:9px;overflow:hidden; animation:fadeUp .3s ease both }
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.eg-hdr{display:flex;align-items:center;gap:7px;padding:9px 12px;border-bottom:1px solid var(--border)}
-.eg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.eg-type{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);flex:1}
-.eg-ct{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:999px;background:var(--acc-dim);color:var(--acc)}
-.eg-vals{padding:9px 12px;display:flex;flex-direction:column;gap:5px}
-.eg-val{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--tx);display:flex;align-items:flex-start;gap:6px;line-height:1.4}
+/* -- ERROR -- */
+.err-box{padding:11px 14px;background:var(--err2);border:1px solid rgba(255,71,87,.25);border-radius:8px;color:var(--err);font-size:11px;line-height:1.5;display:none}
+
+/* -- STREAM -- */
+#streamBox{display:none}
+#streamInner{padding:12px 14px;font-size:11.5px;color:var(--tx2);line-height:1.7;max-height:140px;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
+
+/* -- RESULTS -- */
+.entities-grid{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.eg{background:var(--s2);border:1px solid var(--border);border-radius:8px;overflow:hidden;animation:fadeUp .25s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.eg-hdr{display:flex;align-items:center;gap:6px;padding:8px 11px;border-bottom:1px solid var(--border)}
+.eg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.eg-type{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);flex:1}
+.eg-ct{font-size:9px;padding:1px 6px;border-radius:999px;background:var(--acc-dim);color:var(--acc)}
+.eg-vals{padding:8px 11px;display:flex;flex-direction:column;gap:4px}
+.eg-val{font-size:11px;color:var(--tx);display:flex;align-items:flex-start;gap:5px;line-height:1.4}
 .eg-val::before{content:'>';color:var(--tx3);flex-shrink:0}
-.eg-empty{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx3);padding:9px 12px;font-style:italic}
-
-.hl-panel{grid-column:1/-1}
-.hl-inner{padding:16px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:2;white-space:pre-wrap;word-break:break-word}
-mark{ padding:1px 5px;border-radius:3px;font-weight:500;cursor:default; }
-
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:8px;color:var(--tx3)}
-.empty-icon{font-size:28px;opacity:.4}
-.empty-txt{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
-
-.err-box{ grid-column:1/-1;display:flex;align-items:flex-start;gap:10px; padding:12px 15px;background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.25); border-radius:8px;color:var(--err);font-family:'IBM Plex Mono',monospace;font-size:11.5px; line-height:1.5;display:none }
-
-.loading-anim{display:flex;align-items:center;justify-content:center;gap:5px;padding:40px}
-.lb{width:4px;height:4px;background:var(--acc);border-radius:50%;animation:lbounce 1.2s ease-in-out infinite}
-.lb:nth-child(1){animation-delay:0s}
-.lb:nth-child(2){animation-delay:.15s}
-.lb:nth-child(3){animation-delay:.3s}
-.lb:nth-child(4){animation-delay:.45s}
-@keyframes lbounce{0%,80%,100%{transform:scale(0);opacity:.3}40%{transform:scale(1.2);opacity:1}}
-
-.btn-copy{ padding:4px 10px;background:transparent;border:1px solid var(--border2);border-radius:5px; color:var(--tx2);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em; cursor:pointer;transition:all .15s }
+.eg-empty{font-size:10px;color:var(--tx3);padding:8px 11px;font-style:italic}
+.hl-inner{padding:14px;font-size:12px;line-height:2.1;white-space:pre-wrap;word-break:break-word}
+mark{padding:1px 4px;border-radius:3px;font-weight:500;cursor:default}
+.empty{display:flex;align-items:center;justify-content:center;padding:32px;color:var(--tx3);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.loading-anim{display:flex;align-items:center;justify-content:center;gap:5px;padding:32px}
+.lb{width:4px;height:4px;background:var(--acc);border-radius:50%;animation:lb 1.2s ease-in-out infinite}
+.lb:nth-child(1){animation-delay:0s}.lb:nth-child(2){animation-delay:.15s}.lb:nth-child(3){animation-delay:.3s}.lb:nth-child(4){animation-delay:.45s}
+@keyframes lb{0%,80%,100%{transform:scale(0);opacity:.3}40%{transform:scale(1.2);opacity:1}}
+.btn-copy{padding:3px 9px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--tx2);font-family:inherit;font-size:9px;cursor:pointer;transition:all .15s}
 .btn-copy:hover{border-color:var(--acc);color:var(--acc)}
 
-#streamBox{ grid-column:1/-1; background:var(--s1);border:1px solid var(--border);border-radius:12px; overflow:hidden;display:none }
-#streamInner{ padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:11.5px; color:var(--tx2);line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap; word-break:break-word }
+/* -- SETTINGS DRAWER -- */
+#settingsOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:flex-start;justify-content:flex-end;padding:20px}
+#settingsOverlay.open{display:flex}
+#settingsDrawer{background:var(--s1);border:1px solid var(--border2);border-radius:12px;width:100%;max-width:480px;max-height:calc(100vh - 40px);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.drawer-title{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--tx);border-bottom:1px solid var(--border);padding-bottom:12px}
+.setting-group{display:flex;flex-direction:column;gap:6px}
+.setting-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2)}
+.setting-desc{font-size:10px;color:var(--tx3);line-height:1.5}
+.setting-row{display:flex;align-items:center;gap:10px}
+.setting-input{flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:12px;padding:7px 10px;outline:none;transition:border-color .15s}
+.setting-input:focus{border-color:var(--acc2)}
+.setting-val{font-size:11px;color:var(--acc);min-width:36px;text-align:right}
+input[type=range]{accent-color:var(--acc);cursor:pointer;flex:1}
+.setting-textarea{width:100%;min-height:160px;background:var(--s2);border:1px solid var(--border2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:11px;padding:9px 11px;outline:none;resize:vertical;line-height:1.6;transition:border-color .15s}
+.setting-textarea:focus{border-color:var(--acc2)}
+.drawer-actions{display:flex;gap:8px;padding-top:4px;border-top:1px solid var(--border)}
+.btn-sm{padding:8px 16px;border-radius:6px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;border:none;transition:all .15s}
+.btn-sm-primary{background:var(--acc);color:#080c10}
+.btn-sm-ghost{background:transparent;color:var(--tx2);border:1px solid var(--border2)}
+.btn-sm-ghost:hover{border-color:var(--tx2);color:var(--tx)}
+.btn-sm-danger{background:transparent;color:var(--err);border:1px solid rgba(255,71,87,.3)}
+.btn-sm-danger:hover{background:var(--err2)}
 </style>
 </head>
 <body>
 <div class="wrap">
 
+<!-- HEADER -->
 <header>
   <div class="hdr-top">
     <div class="logo">
-      <span class="logo-sup">Extrator de Entidades . 100% Local</span>
+      <span class="logo-sup">Extrator de Entidades - 100% Local</span>
       <h1>NER com <em>Gemma 4</em></h1>
     </div>
-    <div class="chip"><span class="chip-dot"></span>WebGPU . SharedWorker</div>
+    <div class="hdr-actions">
+      <div class="chip"><span class="chip-dot"></span>SharedWorker + WebGPU</div>
+      <button class="btn-icon" id="btnSettings" title="Configuracoes">&#x2699; Config</button>
+    </div>
   </div>
-
   <div id="statusBar">
-    <span class="sb-label">Modelo</span>
+    <span class="sb-lbl">Modelo</span>
     <span class="sb-model" id="sbModel">onnx-community/gemma-4-E2B-it-ONNX</span>
-    <span class="sb-state state-idle" id="sbState">Nao carregado</span>
-    <div id="progressWrap"><div id="progressBar"></div></div>
+    <span class="sb-badge badge-idle" id="sbState">Nao carregado</span>
+    <span id="tabs-count"></span>
+    <span id="queue-count"></span>
+    <div id="prog-lbl"></div>
+    <div id="prog-wrap"><div id="prog-bar"></div></div>
   </div>
 </header>
 
 <div class="grid">
 
+  <!-- INPUT -->
   <div class="panel">
     <div class="ph">
       <span class="ph-title">Texto de Entrada</span>
       <span class="ph-meta" id="charCount">0 chars</span>
     </div>
-    <textarea id="textInput" placeholder="Cole aqui o texto para extracao..."></textarea>
+    <textarea id="textInput"></textarea>
   </div>
 
-  <div class="info-panel">
-    <div class="model-selector-card">
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div class="panel">
       <div class="ph"><span class="ph-title">Variante do Modelo</span></div>
       <div class="model-opts" id="modelOpts">
         <label class="model-opt active">
           <input type="radio" name="model" value="onnx-community/gemma-4-E2B-it-ONNX" checked/>
           <span class="model-opt-name">Gemma 4 E2B</span>
-          <span class="model-opt-size">~500 MB . rapido</span>
+          <span class="model-opt-size">~500 MB</span>
         </label>
         <label class="model-opt">
           <input type="radio" name="model" value="onnx-community/gemma-4-E4B-it-ONNX"/>
           <span class="model-opt-name">Gemma 4 E4B</span>
-          <span class="model-opt-size">~1.5 GB . melhor</span>
+          <span class="model-opt-size">~1.5 GB</span>
         </label>
       </div>
     </div>
-
-    <div class="model-selector-card" style="padding: 12px 14px;">
-        <div style="display:flex; gap:12px; margin-bottom: 12px;">
-            <div style="flex:1;">
-                <label class="config-label">Max Tokens:</label>
-                <input type="number" id="inpMaxTokens" class="config-input" value="512">
-            </div>
-            <div style="flex:1;">
-                <label class="config-label">Temperatura (0 p/ Exato):</label>
-                <input type="number" id="inpTemp" class="config-input" value="0.0" step="0.1" min="0" max="2">
-            </div>
-        </div>
-        <div>
-            <label class="config-label">Prompt de Sistema:</label>
-            <textarea id="inpSystemPrompt" class="config-input" style="min-height: 80px; padding: 8px;">Voce e um extrator de entidades nomeadas especializado em textos brasileiros.
-Retorne SOMENTE um objeto JSON valido, sem markdown, sem explicacoes, sem texto fora do JSON.
-Formato EXATO (todos os campos obrigatorios):
-{"pessoa":[],"empresa":[],"endereco":[],"cidade":[],"estado":[],"pais":[],"nascimento":[],"cpf":[],"cnpj":[],"rastreio":[],"cte":[],"nfe":[]}
-Regras: preserve valores exatamente como aparecem; sem duplicatas por chave; arrays vazios se nao encontrado.</textarea>
-        </div>
+    <div class="panel">
+      <div class="info-card">
+        Roda 100% local via WebGPU.<br>
+        Modelo <strong>compartilhado entre abas</strong> via SharedWorker.<br>
+        Download e cache sao sincronizados automaticamente.<br>
+        Requisicoes em paralelo entram na fila automaticamente.
+      </div>
     </div>
   </div>
 
-  <div class="actions">
+  <!-- ACTIONS -->
+  <div class="actions full">
     <button class="btn btn-ghost" id="btnClear">Limpar</button>
-    <button class="btn btn-load" id="btnLoad">
-      <span id="loadIcon">v</span>
+    <button class="btn btn-teal" id="btnLoad">
+      <span id="loadIcon">&#x2193;</span>
       <span id="loadTxt">Carregar Modelo</span>
     </button>
     <button class="btn btn-primary" id="btnExtract" disabled>
-      <span id="extractIcon">>></span>
+      <span id="extractIcon">&#x25B6;</span>
       <span id="extractTxt">Extrair Entidades</span>
     </button>
   </div>
 
-  <div class="err-box" id="errBox"></div>
+  <!-- ERROR -->
+  <div class="err-box full" id="errBox"></div>
 
-  <div id="streamBox">
-    <div class="ph">
-      <span class="ph-title">Saida bruta do modelo</span>
-    </div>
+  <!-- STREAM OUTPUT -->
+  <div class="panel full" id="streamBox">
+    <div class="ph"><span class="ph-title">Saida do modelo</span></div>
     <div id="streamInner"></div>
   </div>
 
-  <div class="panel results" id="resultsPanel" style="display:none">
+  <!-- RESULTS -->
+  <div class="panel full" id="resultsPanel" style="display:none">
     <div class="ph">
       <span class="ph-title">Entidades Extraidas</span>
       <button class="btn-copy" id="btnCopy">Copiar JSON</button>
     </div>
-    <div id="resultsInner">
-      <div class="empty"><span class="empty-icon">o</span><span class="empty-txt">Aguardando analise</span></div>
-    </div>
+    <div id="resultsInner"><div class="empty">Aguardando analise</div></div>
   </div>
 
-  <div class="panel hl-panel" id="hlPanel" style="display:none">
+  <!-- HIGHLIGHTED TEXT -->
+  <div class="panel full" id="hlPanel" style="display:none">
     <div class="ph"><span class="ph-title">Texto Anotado</span></div>
     <div class="hl-inner" id="hlInner"></div>
   </div>
 
-</div>
+</div><!-- /grid -->
+</div><!-- /wrap -->
+
+<!-- -- SETTINGS DRAWER -- -->
+<div id="settingsOverlay">
+  <div id="settingsDrawer">
+    <div class="drawer-title">&#x2699; Configuracoes do Modelo e Prompt</div>
+
+    <div class="setting-group">
+      <div class="setting-label">max_new_tokens</div>
+      <div class="setting-desc">Tamanho maximo da resposta gerada.</div>
+      <div class="setting-row">
+        <input type="range" id="cfgMaxTokens" min="64" max="2048" step="64" value="512"/>
+        <span class="setting-val" id="cfgMaxTokensVal">512</span>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-label">temperature</div>
+      <div class="setting-desc">0 = deterministico, >1 = mais criativo. Para NER use 0 ou 1.</div>
+      <div class="setting-row">
+        <input type="range" id="cfgTemp" min="0" max="2" step="0.05" value="1.0"/>
+        <span class="setting-val" id="cfgTempVal">1.00</span>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-label">top_p</div>
+      <div class="setting-desc">Nucleus sampling. 1.0 = desabilitado.</div>
+      <div class="setting-row">
+        <input type="range" id="cfgTopP" min="0.01" max="1.0" step="0.01" value="1.0"/>
+        <span class="setting-val" id="cfgTopPVal">1.00</span>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-label">repetition_penalty</div>
+      <div class="setting-desc">1.0 = sem penalidade. >1 reduz repeticoes.</div>
+      <div class="setting-row">
+        <input type="range" id="cfgRepPen" min="1.0" max="2.0" step="0.05" value="1.0"/>
+        <span class="setting-val" id="cfgRepPenVal">1.00</span>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-label">do_sample</div>
+      <div class="setting-desc">Amostragem estocastica. Para NER mantenha desabilitado.</div>
+      <div class="setting-row" style="gap:12px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer">
+          <input type="checkbox" id="cfgDoSample" style="accent-color:var(--acc)"/>
+          Habilitar amostragem
+        </label>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-label">System Prompt</div>
+      <div class="setting-desc">Instrucao enviada ao modelo antes do texto. Edite para customizar o comportamento.</div>
+      <textarea class="setting-textarea" id="cfgPrompt"></textarea>
+      <button class="btn-sm btn-sm-danger" id="btnResetPrompt" style="width:fit-content">Restaurar padrao</button>
+    </div>
+
+    <div class="drawer-actions">
+      <button class="btn-sm btn-sm-primary" id="btnSaveSettings">Salvar</button>
+      <button class="btn-sm btn-sm-ghost" id="btnCloseSettings">Fechar</button>
+    </div>
+  </div>
 </div>
 
-<script type="module">
+<script>
+// -- ENTITIES ---------------------------------------------------------
 const ENTITIES = [
-  {key:'pessoa',    label:'Pessoa',          color:'#a78bfa'},
-  {key:'empresa',   label:'Empresa',         color:'#fb923c'},
-  {key:'endereco',  label:'Endereco',        color:'#38bdf8'},
-  {key:'cidade',    label:'Cidade',          color:'#34d399'},
-  {key:'estado',    label:'Estado',          color:'#fbbf24'},
-  {key:'pais',      label:'Pais',            color:'#f472b6'},
-  {key:'nascimento',label:'Ano Nasc.',       color:'#c084fc'},
-  {key:'cpf',       label:'CPF',             color:'#2dd4bf'},
-  {key:'cnpj',      label:'CNPJ',            color:'#f97316'},
+  {key:'pessoa',    label:'Pessoa',           color:'#a78bfa'},
+  {key:'empresa',   label:'Empresa',          color:'#fb923c'},
+  {key:'endereco',  label:'Endereco',         color:'#38bdf8'},
+  {key:'cidade',    label:'Cidade',           color:'#34d399'},
+  {key:'estado',    label:'Estado',           color:'#fbbf24'},
+  {key:'pais',      label:'Pais',             color:'#f472b6'},
+  {key:'nascimento',label:'Ano Nasc.',        color:'#c084fc'},
+  {key:'cpf',       label:'CPF',              color:'#2dd4bf'},
+  {key:'cnpj',      label:'CNPJ',             color:'#f97316'},
   {key:'rastreio',  label:'Rastreio Correios',color:'#4ade80'},
-  {key:'cte',       label:'CT-e',            color:'#f87171'},
-  {key:'nfe',       label:'NF-e',            color:'#60a5fa'},
+  {key:'cte',       label:'CT-e',             color:'#f87171'},
+  {key:'nfe',       label:'NF-e',             color:'#60a5fa'},
 ];
 
+const DEFAULT_PROMPT = [
+  'Voce e um extrator de entidades nomeadas especializado em textos brasileiros.',
+  'Retorne SOMENTE um objeto JSON valido, sem markdown, sem explicacoes, sem texto fora do JSON.',
+  'Formato EXATO (todos os campos obrigatorios):',
+  '{"pessoa":[],"empresa":[],"endereco":[],"cidade":[],"estado":[],"pais":[],"nascimento":[],"cpf":[],"cnpj":[],"rastreio":[],"cte":[],"nfe":[]}',
+  'Regras: preserve valores exatamente como aparecem no texto original; sem duplicatas por chave; arrays vazios se nao encontrado.'
+].join('\n');
+
+// -- DOM ---------------------------------------------------------------
 const $ = id => document.getElementById(id);
-const textInput   = $('textInput');
-const charCount   = $('charCount');
-const btnLoad     = $('btnLoad');
-const btnExtract  = $('btnExtract');
-const btnClear    = $('btnClear');
-const btnCopy     = $('btnCopy');
-const sbModel     = $('sbModel');
-const sbState     = $('sbState');
-const progressWrap= $('progressWrap');
-const progressBar = $('progressBar');
-const errBox      = $('errBox');
-const streamBox   = $('streamBox');
-const streamInner = $('streamInner');
-const resultsPanel= $('resultsPanel');
-const resultsInner= $('resultsInner');
-const hlPanel     = $('hlPanel');
-const hlInner     = $('hlInner');
-const loadIcon    = $('loadIcon');
-const loadTxt     = $('loadTxt');
-const extractIcon = $('extractIcon');
-const extractTxt  = $('extractTxt');
+const ti      = $('textInput');
+const cc      = $('charCount');
+const btnL    = $('btnLoad');
+const btnE    = $('btnExtract');
+const btnC    = $('btnClear');
+const btnCp   = $('btnCopy');
+const sbM     = $('sbModel');
+const sbS     = $('sbState');
+const pWrap   = $('prog-wrap');
+const pBar    = $('prog-bar');
+const pLbl    = $('prog-lbl');
+const tabsCt  = $('tabs-count');
+const queueCt = $('queue-count');
+const errB    = $('errBox');
+const stBox   = $('streamBox');
+const stIn    = $('streamInner');
+const resP    = $('resultsPanel');
+const resI    = $('resultsInner');
+const hlP     = $('hlPanel');
+const hlI     = $('hlInner');
 
-// Config Params
-const inpMaxTokens = $('inpMaxTokens');
-const inpTemp = $('inpTemp');
-const inpSystemPrompt = $('inpSystemPrompt');
+// -- CONFIG ------------------------------------------------------------
+let cfg = loadConfig();
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem('ner_cfg');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return {
+    maxNewTokens: 512,
+    temperature: 1.0,
+    topP: 1.0,
+    repetitionPenalty: 1.0,
+    doSample: false,
+    systemPrompt: DEFAULT_PROMPT,
+  };
+}
+function saveConfig() {
+  try { localStorage.setItem('ner_cfg', JSON.stringify(cfg)); } catch(e) {}
+}
 
-let lastResult = null;
+// -- SETTINGS DRAWER ---------------------------------------------------
+function syncDrawerToConfig() {
+  $('cfgMaxTokens').value    = cfg.maxNewTokens;
+  $('cfgMaxTokensVal').textContent = cfg.maxNewTokens;
+  $('cfgTemp').value         = cfg.temperature;
+  $('cfgTempVal').textContent = cfg.temperature.toFixed(2);
+  $('cfgTopP').value         = cfg.topP;
+  $('cfgTopPVal').textContent = cfg.topP.toFixed(2);
+  $('cfgRepPen').value       = cfg.repetitionPenalty;
+  $('cfgRepPenVal').textContent = cfg.repetitionPenalty.toFixed(2);
+  $('cfgDoSample').checked   = cfg.doSample;
+  $('cfgPrompt').value       = cfg.systemPrompt;
+}
+syncDrawerToConfig();
+
+function bindRange(id, valId, key, fmt) {
+  const el  = $(id);
+  const val = $(valId);
+  el.addEventListener('input', () => {
+    const v = parseFloat(el.value);
+    val.textContent = fmt ? v.toFixed(2) : String(v);
+    cfg[key] = v;
+  });
+}
+bindRange('cfgMaxTokens', 'cfgMaxTokensVal', 'maxNewTokens', false);
+bindRange('cfgTemp',      'cfgTempVal',      'temperature',  true);
+bindRange('cfgTopP',      'cfgTopPVal',      'topP',         true);
+bindRange('cfgRepPen',    'cfgRepPenVal',    'repetitionPenalty', true);
+$('cfgDoSample').addEventListener('change', e => { cfg.doSample = e.target.checked; });
+$('cfgPrompt').addEventListener('input', e => { cfg.systemPrompt = e.target.value; });
+$('btnResetPrompt').addEventListener('click', () => {
+  cfg.systemPrompt = DEFAULT_PROMPT;
+  $('cfgPrompt').value = DEFAULT_PROMPT;
+});
+$('btnSaveSettings').addEventListener('click', () => {
+  saveConfig();
+  closeSettings();
+  showToast('Configuracoes salvas');
+});
+$('btnCloseSettings').addEventListener('click', closeSettings);
+$('settingsOverlay').addEventListener('click', e => { if (e.target === $('settingsOverlay')) closeSettings(); });
+$('btnSettings').addEventListener('click', () => { $('settingsOverlay').classList.add('open'); });
+function closeSettings() { $('settingsOverlay').classList.remove('open'); }
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ok);color:#080c10;padding:8px 18px;border-radius:999px;font-size:11px;font-weight:700;z-index:999;animation:fadeUp .2s ease';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+// -- WORKER ------------------------------------------------------------
+let worker = null;
+let pendingReqs = new Map(); // id -> { resolve, reject, onToken }
+let reqCounter  = 0;
 let currentModelId = 'onnx-community/gemma-4-E2B-it-ONNX';
+let workerState = 'idle';
 
-// -- INICIALIZAÇÃO DO SHARED WORKER ------------------------------------
-// Nota: Workers do tipo module requerem um servidor (HTTP/S), 
-// o GitHub pages fornece isso perfeitamente.
-const myWorker = new SharedWorker('shared-worker.js', { type: 'module' });
-myWorker.port.start();
+function initWorker() {
+  try {
+    worker = new SharedWorker('./ner-worker.js', { type: 'module', name: 'ner-gemma4' });
+    worker.port.onmessage = handleWorkerMsg;
+    worker.port.onmessageerror = (e) => console.error('Worker msg error', e);
+    worker.port.start();
+  } catch(e) {
+    showErr('SharedWorker nao disponivel: ' + e.message);
+  }
+}
 
-myWorker.port.onmessage = function(e) {
-    const data = e.data;
+function handleWorkerMsg(ev) {
+  const { id, type, payload } = ev.data;
 
-    if (data.type === 'state') {
-        const { status, label, progress } = data.state;
-        sbState.className = 'sb-state state-' + status;
-        sbState.textContent = label;
+  if (type === 'state') {
+    workerState = payload.loadState;
+    applyWorkerState(payload);
 
-        if (status === 'loading') {
-            progressWrap.style.display = 'block';
-            progressBar.style.width = progress + '%';
-            setLoadBtn(true);
-        } else if (status === 'ready') {
-            progressWrap.style.display = 'none';
-            setLoadBtn(false);
-            btnLoad.textContent = 'OK Recarregar';
-            loadIcon.textContent = 'OK';
-            loadTxt.textContent = 'Recarregar';
-            btnExtract.disabled = false;
-            setExtractBtn(false);
-        } else if (status === 'running') {
-            setExtractBtn(true);
-        } else if (status === 'error') {
-            setLoadBtn(false);
-            setExtractBtn(false);
-            progressWrap.style.display = 'none';
-        }
-    } 
-    else if (data.type === 'stream') {
-        streamInner.textContent = data.chunk;
-        streamInner.scrollTop = streamInner.scrollHeight;
-    } 
-    else if (data.type === 'result') {
-        streamInner.textContent = data.result;
-        const parsed = parseJSON(data.result);
-        if(parsed) {
-            lastResult = parsed;
-            renderResults(parsed, textInput.value.trim());
-        } else {
-            showErr('Modelo retornou resposta invalida. Tente novamente.');
-            resultsPanel.style.display = 'none';
-        }
-        setExtractBtn(false);
-    } 
-    else if (data.type === 'error') {
-        showErr(data.message);
-        resultsPanel.style.display = 'none';
-        setExtractBtn(false);
-        setLoadBtn(false);
+  } else if (type === 'progress') {
+    applyProgress(payload);
+
+  } else if (type === 'ready') {
+    workerState = 'ready';
+    setModelState('ready', 'Pronto OK');
+    btnE.disabled = false;
+    setLoadBtn(false);
+    hideProgress();
+
+  } else if (type === 'error') {
+    if (id && pendingReqs.has(id)) {
+      pendingReqs.get(id).reject(new Error(payload.message));
+      pendingReqs.delete(id);
+    } else {
+      workerState = 'error';
+      setModelState('error', 'Erro');
+      showErr(payload.message);
+      setLoadBtn(false);
+      hideProgress();
     }
-};
 
-// -- UI UTILS ----------------------------------------------------------
-function showErr(msg){ errBox.style.display='flex'; errBox.textContent='(!) '+msg }
-function hideErr(){ errBox.style.display='none' }
+  } else if (type === 'token') {
+    if (id && pendingReqs.has(id)) {
+      const req = pendingReqs.get(id);
+      if (req.onToken) req.onToken(payload.chunk, payload.generated);
+    }
 
-function setLoadBtn(loading){
-  btnLoad.disabled = loading;
-  loadIcon.textContent = loading ? '' : 'v';
-  loadTxt.textContent  = loading ? 'Carregando...' : 'Carregar Modelo';
-  if(loading) loadIcon.innerHTML = '<div class="spinner spinner-acc"></div>';
+  } else if (type === 'result') {
+    if (id && pendingReqs.has(id)) {
+      pendingReqs.get(id).resolve(payload.generated);
+      pendingReqs.delete(id);
+    }
+
+  } else if (type === 'queue') {
+    const depth = payload.depth || 0;
+    if (depth > 0) {
+      queueCt.style.display = 'inline';
+      queueCt.textContent = depth + ' na fila';
+    } else {
+      queueCt.style.display = 'none';
+    }
+    if (!payload.busy && workerState === 'ready') {
+      setExtBtn(false);
+    }
+
+  } else if (type === 'pong') {
+    // tab count not directly available from worker, we just use ping/pong
+  }
 }
 
-function setExtractBtn(running){
-  btnExtract.disabled = running;
-  extractIcon.textContent = running ? '' : '>>';
-  extractTxt.textContent  = running ? 'Processando...' : 'Extrair Entidades';
-  if(running) extractIcon.innerHTML = '<div class="spinner"></div>';
+function applyWorkerState(s) {
+  workerState = s.loadState;
+  if (s.loadState === 'ready') {
+    setModelState('ready', 'Pronto OK');
+    btnE.disabled = false;
+    setLoadBtn(false);
+    hideProgress();
+  } else if (s.loadState === 'loading') {
+    setModelState('loading', 'Carregando...');
+    setLoadBtn(true);
+  } else if (s.loadState === 'error') {
+    setModelState('error', 'Erro');
+    showErr(s.loadError || 'Erro desconhecido');
+    setLoadBtn(false);
+    hideProgress();
+  } else {
+    setModelState('idle', 'Nao carregado');
+    setLoadBtn(false);
+  }
+  if (s.modelId) sbM.textContent = s.modelId;
 }
 
+function applyProgress(p) {
+  pWrap.style.display = 'block';
+  pBar.style.width = (p.overall || 0) + '%';
+  pLbl.style.display = 'block';
+  if (p.phase === 'gpu') {
+    pLbl.textContent = 'Carregando na GPU... ' + (p.overall || 0) + '%';
+    setModelState('loading', 'GPU ' + (p.overall || 0) + '%');
+  } else if (p.activeFile) {
+    pLbl.textContent = (p.overall || 0) + '% total  |  ' + p.activeFile + ' ' + (p.activePct || 0) + '%';
+    setModelState('loading', 'Baixando... ' + (p.overall || 0) + '%');
+  } else {
+    pLbl.textContent = (p.overall || 0) + '%';
+  }
+}
+
+function hideProgress() {
+  setTimeout(() => {
+    pWrap.style.display = 'none';
+    pLbl.style.display = 'none';
+    pBar.style.width = '0%';
+    pLbl.textContent = '';
+  }, 1500);
+}
+
+// -- STATE HELPERS -----------------------------------------------------
+function setModelState(state, label) {
+  sbS.className = 'sb-badge badge-' + state;
+  sbS.textContent = label;
+}
+
+const showErr  = msg => { errB.style.display = 'block'; errB.textContent = '(!) ' + msg; };
+const hideErr  = ()  => { errB.style.display = 'none'; };
+
+function setLoadBtn(loading) {
+  btnL.disabled = loading;
+  const icon = $('loadIcon');
+  const txt  = $('loadTxt');
+  if (loading) {
+    icon.innerHTML = '<div class="spinner spinner-acc"></div>';
+    txt.textContent = 'Carregando...';
+  } else {
+    icon.textContent = workerState === 'ready' ? 'OK' : '\u2193';
+    txt.textContent  = workerState === 'ready' ? 'Recarregar' : 'Carregar Modelo';
+  }
+}
+
+function setExtBtn(running) {
+  btnE.disabled = running || workerState !== 'ready';
+  const icon = $('extractIcon');
+  const txt  = $('extractTxt');
+  if (running) {
+    icon.innerHTML = '<div class="spinner"></div>';
+    txt.textContent = 'Processando...';
+  } else {
+    icon.textContent = '\u25B6';
+    txt.textContent  = 'Extrair Entidades';
+  }
+}
+
+// -- EVENTS ------------------------------------------------------------
 document.querySelectorAll('.model-opt').forEach(el => {
   el.addEventListener('click', () => {
     document.querySelectorAll('.model-opt').forEach(e => e.classList.remove('active'));
     el.classList.add('active');
     currentModelId = el.querySelector('input').value;
-    sbModel.textContent = currentModelId;
+    sbM.textContent = currentModelId;
   });
 });
 
-textInput.addEventListener('input', () => {
-  charCount.textContent = textInput.value.length + ' chars';
+ti.addEventListener('input', () => { cc.textContent = ti.value.length + ' chars'; });
+ti.placeholder = 'Cole aqui o texto para extracao de entidades...';
+ti.value = [
+  'Joao Carlos da Silva, nascido em 1985, CPF 123.456.789-00,',
+  'reside na Av. Paulista, 1000, apto 42, Sao Paulo, SP, Brasil.',
+  'E socio da TechNova Solucoes Ltda, CNPJ 12.345.678/0001-90, localizada em Campinas, SP.',
+  'Encomenda rastreio AA987654321BR com CT-e 35230112345678000190570010000012341000012345',
+  'e NF-e 35230112345678000190550010000123411234567890.',
+  'Maria Oliveira, CPF 987.654.321-00, diretora da filial em Lisboa, Portugal.'
+].join('\n');
+cc.textContent = ti.value.length + ' chars';
+
+btnC.addEventListener('click', () => {
+  ti.value = ''; cc.textContent = '0 chars';
+  resP.style.display = 'none';
+  hlP.style.display  = 'none';
+  stBox.style.display= 'none';
+  hideErr(); lastResult = null;
 });
 
-btnClear.addEventListener('click', () => {
-  textInput.value=''; charCount.textContent='0 chars';
-  resultsPanel.style.display='none';
-  hlPanel.style.display='none';
-  streamBox.style.display='none';
-  hideErr(); lastResult=null;
-});
-
-btnCopy.addEventListener('click', () => {
-  if(!lastResult) return;
-  navigator.clipboard.writeText(JSON.stringify(lastResult,null,2)).then(() => {
-    btnCopy.textContent='Copiado!';
-    setTimeout(()=>btnCopy.textContent='Copiar JSON',2000);
+btnCp.addEventListener('click', () => {
+  if (!lastResult) return;
+  navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => {
+    btnCp.textContent = 'Copiado!';
+    setTimeout(() => { btnCp.textContent = 'Copiar JSON'; }, 2000);
   });
 });
 
-// -- ACTIONS --------------------------------------------------------
-btnLoad.addEventListener('click', () => {
+btnL.addEventListener('click', () => {
+  if (!worker) return;
   hideErr();
-  myWorker.port.postMessage({
-      action: 'load_model',
-      payload: { modelId: currentModelId }
-  });
+  setLoadBtn(true);
+  setModelState('loading', 'Iniciando...');
+  worker.port.postMessage({ type: 'load', payload: { modelId: currentModelId } });
 });
 
-btnExtract.addEventListener('click', () => {
-  const text = textInput.value.trim();
-  if(!text){ showErr('Insira um texto para analise.'); return; }
-  
-  hideErr();
-  streamBox.style.display='block';
-  streamInner.textContent = '';
-  resultsPanel.style.display='block';
-  resultsInner.innerHTML = `
-    <div class="loading-anim">
-      <div class="lb"></div><div class="lb"></div>
-      <div class="lb"></div><div class="lb"></div>
-    </div>`;
-  hlPanel.style.display='none';
+// -- EXTRACT -----------------------------------------------------------
+let lastResult = null;
 
-  myWorker.port.postMessage({
-      action: 'extract',
-      payload: {
-          text: text,
-          systemPrompt: inpSystemPrompt.value,
-          temperature: inpTemp.value,
-          maxTokens: inpMaxTokens.value
+btnE.addEventListener('click', async () => {
+  const text = ti.value.trim();
+  if (!text) { showErr('Insira um texto para analise.'); return; }
+  if (workerState !== 'ready') { showErr('Carregue o modelo primeiro.'); return; }
+
+  hideErr();
+  setExtBtn(true);
+  stBox.style.display = 'block';
+  stIn.textContent = '';
+  resP.style.display = 'block';
+  resI.innerHTML = '<div class="loading-anim"><div class="lb"></div><div class="lb"></div><div class="lb"></div><div class="lb"></div></div>';
+  hlP.style.display = 'none';
+
+  const id = 'req_' + (++reqCounter);
+
+  try {
+    const generated = await new Promise((resolve, reject) => {
+      pendingReqs.set(id, {
+        resolve,
+        reject,
+        onToken: (chunk, full) => {
+          stIn.textContent = full;
+          stIn.scrollTop = stIn.scrollHeight;
+        }
+      });
+      worker.port.postMessage({
+        id,
+        type: 'extract',
+        payload: {
+          text,
+          config: {
+            maxNewTokens:     cfg.maxNewTokens,
+            temperature:      cfg.temperature,
+            topP:             cfg.topP,
+            repetitionPenalty:cfg.repetitionPenalty,
+            doSample:         cfg.doSample,
+            systemPrompt:     cfg.systemPrompt,
+          }
+        }
+      });
+    });
+
+    stIn.textContent = generated;
+    const parsed = parseJSON(generated);
+    if (parsed) {
+      lastResult = parsed;
+      renderResults(parsed, text);
+    } else {
+      showErr('Modelo retornou resposta invalida. Tente novamente.');
+      resP.style.display = 'none';
+    }
+  } catch (e) {
+    showErr(e.message || 'Erro durante a inferencia.');
+    resP.style.display = 'none';
+  } finally {
+    setExtBtn(false);
+  }
+});
+
+// -- PARSE JSON --------------------------------------------------------
+function parseJSON(raw) {
+  if (typeof raw !== 'string') return null;
+  try {
+    let t = raw.trim().replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
+    // Strip thinking tags
+    t = t.replace(/<\|.*?\|>/g, '').trim();
+    // Find first complete JSON object
+    const start = t.indexOf('{');
+    if (start === -1) return null;
+    // Walk to find matching closing brace
+    let depth = 0, end = -1;
+    for (let i = start; i < t.length; i++) {
+      if (t[i] === '{') depth++;
+      else if (t[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+    }
+    if (end === -1) return null;
+    const jsonStr = t.slice(start, end + 1);
+    const parsed = JSON.parse(jsonStr);
+    // Ensure all values are arrays of strings (fixes "val.replace is not a function")
+    const clean = {};
+    ENTITIES.forEach(et => {
+      const v = parsed[et.key];
+      if (Array.isArray(v)) {
+        // Filter out non-strings and trim each value
+        clean[et.key] = v.filter(x => x != null).map(x => String(x).trim()).filter(x => x.length > 0);
+      } else if (typeof v === 'string' && v.trim()) {
+        clean[et.key] = [v.trim()];
+      } else {
+        clean[et.key] = [];
       }
-  });
-});
-
-// -- PARSE JSON (Corrigido bug do val.replace) ----------------------
-function parseJSON(raw){
-  try{
-    // Adicionado conversão segura para String
-    let t = String(raw).trim()
-      .replace(/^```[a-z]*\n?/i,'').replace(/```$/,'').trim();
-    t = t.replace(/<\|channel>thought[\s\S]*?<channel\|>/g,'').trim();
-    const m = t.match(/\{[\s\S]*\}/);
-    if(m) return JSON.parse(m[0]);
-  }catch(e){ console.warn('JSON parse failed:',e) }
+    });
+    return clean;
+  } catch(e) { console.warn('JSON parse failed:', e, raw); }
   return null;
 }
 
-// -- RENDER (Corrigido bug do val.replace) --------------------------
-function renderResults(data, originalText){
-  resultsPanel.style.display='block';
+// -- RENDER ------------------------------------------------------------
+function renderResults(data, originalText) {
+  resP.style.display = 'block';
   const grid = document.createElement('div');
-  grid.className='entities-grid';
-
-  ENTITIES.forEach((et,i) => {
+  grid.className = 'entities-grid';
+  ENTITIES.forEach((et, i) => {
     const vals = data[et.key] || [];
     const card = document.createElement('div');
-    card.className='eg';
-    card.style.animationDelay=(i*.04)+'s';
-
-    card.innerHTML=`
-      <div class="eg-hdr">
-        <span class="eg-dot" style="background:${et.color}"></span>
-        <span class="eg-type">${et.label}</span>
-        <span class="eg-ct">${vals.length}</span>
-      </div>`;
-
-    if(vals.length===0){
-      card.innerHTML+=`<div class="eg-empty">nenhuma encontrada</div>`;
+    card.className = 'eg';
+    card.style.animationDelay = (i * 0.035) + 's';
+    const hdr = document.createElement('div');
+    hdr.className = 'eg-hdr';
+    hdr.innerHTML =
+      '<span class="eg-dot" style="background:' + et.color + '"></span>' +
+      '<span class="eg-type">' + et.label + '</span>' +
+      '<span class="eg-ct">' + vals.length + '</span>';
+    card.appendChild(hdr);
+    if (vals.length === 0) {
+      const em = document.createElement('div');
+      em.className = 'eg-empty'; em.textContent = 'nenhuma encontrada';
+      card.appendChild(em);
     } else {
-      const vd=document.createElement('div');
-      vd.className='eg-vals';
-      vals.forEach(v=>{
-        const el=document.createElement('div');
-        el.className='eg-val';
-        el.textContent=v;
-        vd.appendChild(el);
+      const vd = document.createElement('div'); vd.className = 'eg-vals';
+      vals.forEach(v => {
+        const el = document.createElement('div'); el.className = 'eg-val';
+        el.textContent = String(v); vd.appendChild(el);
       });
       card.appendChild(vd);
     }
     grid.appendChild(card);
   });
-
-  resultsInner.innerHTML='';
-  resultsInner.appendChild(grid);
+  resI.innerHTML = '';
+  resI.appendChild(grid);
   renderHighlight(originalText, data);
 }
 
-function escHtml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function renderHighlight(text, data){
-  const spans=[];
-  ENTITIES.forEach(et=>{
-    (data[et.key]||[]).forEach(val=>{
-      // CORREÇÃO: Transformar o 'val' em String antes do replace e do regex
-      const strVal = String(val);
-      if(!strVal||strVal.length<2) return;
-      
-      const re=new RegExp(strVal.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+function renderHighlight(text, data) {
+  const spans = [];
+  ENTITIES.forEach(et => {
+    (data[et.key] || []).forEach(val => {
+      if (!val || String(val).length < 2) return;
+      const re = new RegExp(String(val).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
       let m;
-      while((m=re.exec(text))!==null){
-        spans.push({start:m.index,end:m.index+m[0].length,label:et.label,color:et.color,val:m[0]});
+      while ((m = re.exec(text)) !== null) {
+        spans.push({start:m.index, end:m.index+m[0].length, label:et.label, color:et.color, val:m[0]});
       }
     });
   });
-
-  spans.sort((a,b)=>a.start-b.start);
-  const clean=[];
-  let cursor=0;
-  for(const sp of spans){
-    if(sp.start>=cursor){ clean.push(sp); cursor=sp.end; }
+  spans.sort((a,b) => a.start - b.start);
+  const clean = []; let cursor = 0;
+  for (const sp of spans) {
+    if (sp.start >= cursor) { clean.push(sp); cursor = sp.end; }
   }
-
-  let html='',pos=0;
-  for(const sp of clean){
-    if(sp.start>pos) html+=escHtml(text.slice(pos,sp.start));
-    html+=`<mark title="${sp.label}" style="background:${sp.color}22;color:${sp.color};border:1px solid ${sp.color}44">${escHtml(sp.val)}<sup style="font-size:8px;opacity:.7;margin-left:2px">${sp.label}</sup></mark>`;
-    pos=sp.end;
+  let html = '', pos = 0;
+  for (const sp of clean) {
+    if (sp.start > pos) html += esc(text.slice(pos, sp.start));
+    html += '<mark title="' + sp.label + '" style="background:' + sp.color + '22;color:' + sp.color + ';border:1px solid ' + sp.color + '44">' +
+      esc(sp.val) + '<sup style="font-size:8px;opacity:.7;margin-left:2px">' + sp.label + '</sup></mark>';
+    pos = sp.end;
   }
-  if(pos<text.length) html+=escHtml(text.slice(pos));
-
-  hlInner.innerHTML=html;
-  hlPanel.style.display='block';
+  if (pos < text.length) html += esc(text.slice(pos));
+  hlI.innerHTML = html;
+  hlP.style.display = 'block';
 }
 
-// -- INIT -----------------------------------------------------------
-textInput.value = `Joao Carlos da Silva, nascido em 1985, CPF 123.456.789-00, reside na Av. Paulista, 1000, apto 42, Sao Paulo, SP, Brasil.
-E socio da TechNova Solucoes Ltda, CNPJ 12.345.678/0001-90, localizada em Campinas, SP.
-Encomenda com rastreio AA987654321BR despachada com CT-e 35230112345678000190570010000012341000012345 e NF-e 35230112345678000190550010000123411234567890.
-Maria Oliveira, CPF 987.654.321-00, e diretora da filial em Lisboa, Portugal.`;
-charCount.textContent = textInput.value.length + ' chars';
+// -- INIT --------------------------------------------------------------
+initWorker();
 </script>
 </body>
 </html>
